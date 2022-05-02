@@ -1,3 +1,4 @@
+from uuid import UUID
 from whatdo2.service_layer.task_service import TaskService
 from whatdo2.domain.task.typedefs import TaskType
 from datetime import datetime
@@ -19,6 +20,10 @@ class TaskCreationPayload(BaseModel):
     task_type: TaskType
     time: int
     activation_time: datetime
+
+
+class DependentTaskPayload(BaseModel):
+    id: UUID
 
 
 @app.get("/tasks")
@@ -46,6 +51,20 @@ async def create_task(task: TaskCreationPayload) -> Dict[Any, Any]:
         time=task.time,
         task_type=task.task_type,
         activation_time=task.activation_time,
+    )
+    return {
+        "task": dc.asdict(result),
+    }
+
+
+@app.post("/task/{task_id}/dependent_tasks")
+async def add_dependent_task(
+    task_id: UUID,
+    dependent_task: DependentTaskPayload,
+) -> Dict[Any, Any]:
+    result = await service.add_dependent_task(
+        task_id=task_id,
+        dependent_task_id=dependent_task.id,
     )
     return {
         "task": dc.asdict(result),

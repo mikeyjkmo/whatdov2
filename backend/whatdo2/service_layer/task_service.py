@@ -1,3 +1,4 @@
+from uuid import UUID
 from motor.motor_asyncio import AsyncIOMotorClient
 from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
 from whatdo2.adapters.task_repository import MongoTaskRepository
@@ -31,3 +32,12 @@ class TaskService:
         )
         await self._repository.save(new_task)
         return new_task
+
+    async def add_dependent_task(self, task_id: UUID, dependent_task_id: UUID) -> Task:
+        t1 = await self._repository.get(task_id=task_id)
+        t2 = await self._repository.get(task_id=dependent_task_id)
+
+        new_t1 = core.make_prerequisite_of(t1, [t2])
+        await self._repository.save(new_t1)
+
+        return new_t1
