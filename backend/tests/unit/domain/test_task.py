@@ -238,3 +238,14 @@ def test_task_will_ignore_effective_density_of_inactive_tasks() -> None:
     assert t.is_prerequisite_for == (DependentTask.from_task(inactive_task),)
     assert t.effective_density == 1.0  # unchanged
     assert t.density == 1.0
+
+
+def test_task_will_have_effective_density_of_zero_if_it_is_inactive() -> None:
+    inactive_task = create_task(
+        name="hello",
+        importance=5,
+        time=5,
+        task_type=TaskType.HOME,
+        activation_time=datetime.now() + timedelta(days=1),
+    )
+    assert inactive_task.effective_density == 0

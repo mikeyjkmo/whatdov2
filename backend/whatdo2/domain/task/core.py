@@ -42,7 +42,7 @@ class TaskFunction:
         return dc.replace(
             task,
             density=density,
-            effective_density=effective_density,
+            effective_density=effective_density if task.is_active else 0,
         )
 
     def _calculate_active_state(self, task: Task) -> Task:
@@ -67,8 +67,8 @@ class TaskFunction:
         its density and is_active state
         """
         return pipe(
-            self._calculate_density,
             self._calculate_active_state,
+            self._calculate_density,
         )(task)
 
 
