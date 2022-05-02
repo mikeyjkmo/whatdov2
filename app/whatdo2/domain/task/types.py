@@ -2,17 +2,12 @@ from typing import Optional, Tuple
 import dataclasses as dc
 from datetime import datetime
 from enum import Enum
-from uuid import UUID
+from whatdo2.domain.types import Entity
 
 
 class TaskType(str, Enum):
     HOME = "HOME"
     WORK = "WORK"
-
-
-@dc.dataclass(frozen=True)
-class Entity:
-    id: UUID
 
 
 @dc.dataclass(frozen=True)
