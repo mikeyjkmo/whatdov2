@@ -10,7 +10,7 @@ def _calculate_density(task: Union[PartiallyInitializedTask, Task]) -> Task:
     """
     density = float(task.importance / task.time)
     max_density_of_dependent_tasks = max(
-        [t.effective_density for t in task.is_prerequisite_for] + [0]
+        [t.effective_density for t in task.is_prerequisite_for if t.is_active] + [0]
     )
 
     effective_density = density

@@ -1,6 +1,6 @@
 from whatdo2.domain.task.typedefs import DependentTask
 import pytest
-from datetime import datetime
+from datetime import datetime, timedelta
 from whatdo2.domain.task.public import (
     create_task,
     TaskType,
@@ -200,3 +200,33 @@ def test_removing_dependent_task_leads_to_correct_density() -> None:
     assert t1.is_prerequisite_for == ()
     assert t1.effective_density == 1.0
     assert t1.density == 1.0
+
+
+def test_task_will_ignore_effective_density_of_inactive_tasks() -> None:
+    """
+    Given two tasks, one the denser of the two being inactive
+    When we make the denser one dependent on the other
+    The density of the other will not change
+    """
+    t1 = create_task(
+        name="hello",
+        importance=5,
+        time=5,
+        task_type=TaskType.HOME,
+        activation_time=datetime.now(),
+        creation_time=datetime.now(),
+    )
+    t2 = create_task(
+        name="hello",
+        importance=8,
+        time=5,
+        task_type=TaskType.HOME,
+        activation_time=datetime.now() + timedelta(days=1),
+        creation_time=datetime.now(),
+    )
+
+    t = make_prerequisite_of(t1, [t2])
+
+    assert t.is_prerequisite_for == (DependentTask.from_task(t2),)
+    assert t.effective_density == 1.0  # unchanged
+    assert t.density == 1.0
