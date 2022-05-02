@@ -57,7 +57,9 @@ def create_task(
         activation_time=activation_time,
         is_active=False,
     )
-    partially_initialized = set_task_active_state(partially_initialized, creation_time)
+    partially_initialized = update_task_active_state(
+        partially_initialized, creation_time
+    )
     return _calculate_density(partially_initialized)
 
 
@@ -102,7 +104,7 @@ def remove_as_prequisite_of(task: Task, dependents_to_remove: List[Task]) -> Tas
     return _calculate_density(result)
 
 
-def set_task_active_state(
+def update_task_active_state(
     task: PartiallyInitializedTask,
     time: datetime,
 ) -> PartiallyInitializedTask:
@@ -121,7 +123,7 @@ __all__ = [
     "create_task",
     "make_prerequisite_of",
     "remove_as_prequisite_of",
-    "set_task_active_state",
+    "update_task_active_state",
     "TaskType",
     "Task",
 ]
