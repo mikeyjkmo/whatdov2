@@ -9,10 +9,13 @@ from whatdo2.domain.utils import pipe
 PRIORITY_DENSITY_MARGIN = 0.1
 
 
-class TaskAction:
+class TaskFunction:
     """
-    This can be either the action to create a task or to perform
+    This can be either the function to create a task or to perform
     a state change on it
+
+    All functions that operate on Task should inherit from this class
+    to ensure that the Task is always in a consistent state after an operation.
     """
 
     def __init__(self, current_time: datetime) -> None:
@@ -69,7 +72,7 @@ class TaskAction:
         )(task)
 
 
-class StateChange(TaskAction):
+class StateChange(TaskFunction):
     def __init__(self, current_time: datetime) -> None:
         self._current_time = current_time
 
@@ -80,7 +83,7 @@ class StateChange(TaskAction):
         return pipe(self._transform, self._ensure_valid_state)(task)
 
 
-class CreateTask(TaskAction):
+class CreateTask(TaskFunction):
     def __call__(
         self,
         name: str,
