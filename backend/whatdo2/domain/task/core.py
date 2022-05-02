@@ -14,6 +14,7 @@ class TaskAction:
     This can be either the action to create a task or to perform
     a state change on it
     """
+
     def __init__(self, current_time: datetime) -> None:
         self._current_time = current_time
 
@@ -50,7 +51,8 @@ class TaskAction:
             is_active=bool(
                 task.activation_time.replace(
                     tzinfo=None,
-                ) <= self._current_time.replace(
+                )
+                <= self._current_time.replace(
                     tzinfo=None,
                 )
             ),
@@ -75,10 +77,7 @@ class StateChange(TaskAction):
         raise NotImplementedError()
 
     def __call__(self, task: Task) -> Task:
-        return pipe(
-            self._transform,
-            self._ensure_valid_state
-        )(task)
+        return pipe(self._transform, self._ensure_valid_state)(task)
 
 
 class CreateTask(TaskAction):

@@ -223,7 +223,7 @@ def test_task_will_ignore_effective_density_of_inactive_tasks() -> None:
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
     )
-    t2 = create_task(
+    inactive_task = create_task(
         name="hello",
         importance=8,
         time=5,
@@ -231,8 +231,10 @@ def test_task_will_ignore_effective_density_of_inactive_tasks() -> None:
         activation_time=datetime.now() + timedelta(days=1),
     )
 
-    t = AddDependentTasks(current_time=datetime.now(), dependent_tasks=[t2])(t1)
+    t = AddDependentTasks(current_time=datetime.now(), dependent_tasks=[inactive_task])(
+        t1
+    )
 
-    assert t.is_prerequisite_for == (DependentTask.from_task(t2),)
+    assert t.is_prerequisite_for == (DependentTask.from_task(inactive_task),)
     assert t.effective_density == 1.0  # unchanged
     assert t.density == 1.0

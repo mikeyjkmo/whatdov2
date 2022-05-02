@@ -9,4 +9,5 @@ def pipe(*fns: Callable[[T], T]) -> Callable[[T], T]:
         for fn in fns:
             res = fn(res)
         return res
+
     return _call
