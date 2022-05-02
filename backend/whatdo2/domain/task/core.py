@@ -30,18 +30,10 @@ def _calculate_density(task: Union[PartiallyInitializedTask, Task]) -> Task:
         # than those that depend on it, as it needs to be done first.
         effective_density = max_density_of_dependent_tasks + PRIORITY_DENSITY_MARGIN
 
-    return Task(
-        id=task.id,
-        name=task.name,
-        importance=task.importance,
-        is_prerequisite_for=task.is_prerequisite_for,
-        time=task.time,
-        task_type=task.task_type,
-        density=density,
-        activation_time=task.activation_time,
-        is_active=task.is_active,
-        effective_density=effective_density,
-    )
+    task_proto = dc.asdict(task)
+    task_proto["density"] = density
+    task_proto["effective_density"] = effective_density
+    return Task(**task_proto)
 
 
 def create_task(
