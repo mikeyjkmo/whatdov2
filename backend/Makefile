@@ -4,7 +4,10 @@ format-check:
 format:
 	poetry run black .
 
-lint: format-check
+type-check:
+	poetry run mypy .
+
+lint: format-check type-check
 	poetry run flake8 .
 
 test:
@@ -18,4 +21,5 @@ test-watch:
 	lint \
 	format-check \
 	test \
-	test-watch
+	test-watch \
+	type-check

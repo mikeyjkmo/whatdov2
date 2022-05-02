@@ -3,8 +3,8 @@ from typing import List
 import uuid
 from datetime import datetime
 
-from .types import TaskType, PartiallyInitializedTask, Task
-from .private import _calculate_density
+from whatdo2.domain.task.typedefs import TaskType, PartiallyInitializedTask, Task
+from whatdo2.domain.task.private import _calculate_density
 
 
 def create_task(
@@ -23,6 +23,7 @@ def create_task(
         importance=importance,
         time=time,
         task_type=task_type,
+        depends_on=(),
         activation_time=activation_time,
     )
     return _calculate_density(partially_initialized)
@@ -58,8 +59,17 @@ def remove_dependencies(task: Task, dependencies_to_remove: List[Task]) -> Task:
     return _calculate_density(result)
 
 
-def is_task_active_at(task: Task, time: datetime):
+def is_task_active_at(task: Task, time: datetime) -> bool:
     """
     Given a task and time, return whether it is active at this time
     """
-    return task.activation_time < time
+    return bool(task.activation_time < time)
+
+
+__all__ = [
+    "create_task",
+    "make_dependent_on",
+    "remove_dependencies",
+    "is_task_active_at",
+    "TaskType",
+]

@@ -1,4 +1,4 @@
-from .types import BaseTask, Task
+from whatdo2.domain.task.typedefs import BaseTask, Task
 
 
 def _calculate_density(task: BaseTask) -> Task:

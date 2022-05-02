@@ -1,8 +1,8 @@
-from typing import Optional, Tuple
+from typing import Tuple
 import dataclasses as dc
 from datetime import datetime
 from enum import Enum
-from whatdo2.domain.types import Entity
+from whatdo2.domain.typedefs import Entity
 
 
 class TaskType(str, Enum):
@@ -17,7 +17,7 @@ class BaseTask(Entity):
     task_type: TaskType
     time: int
     activation_time: datetime
-    depends_on: Tuple["Task", ...] = ()
+    depends_on: Tuple["Task", ...]
 
 
 @dc.dataclass(frozen=True)
@@ -27,5 +27,5 @@ class PartiallyInitializedTask(BaseTask):
 
 @dc.dataclass(frozen=True)
 class Task(BaseTask):
-    density: Optional[float] = None
-    effective_density: Optional[float] = None
+    density: float
+    effective_density: float

@@ -29,7 +29,11 @@ from whatdo2.domain.task.public import (
         ),
     ],
 )
-def test_created_task_has_correct_density(importance, time, expected_density):
+def test_created_task_has_correct_density(
+    importance: int,
+    time: int,
+    expected_density: float,
+) -> None:
     """
     Given a name, importance, time + task_type
     When we create a new task
@@ -47,7 +51,7 @@ def test_created_task_has_correct_density(importance, time, expected_density):
     assert t1.effective_density == expected_density
 
 
-def test_task_takes_max_density_of_dependencies_and_self():
+def test_task_takes_max_density_of_dependencies_and_self() -> None:
     """
     Given a task
     When we make it dependent on other tasks
@@ -84,7 +88,7 @@ def test_task_takes_max_density_of_dependencies_and_self():
     assert t.density == 1.0
 
 
-def test_task_cannot_depend_on_another_one_more_than_once():
+def test_task_cannot_depend_on_another_one_more_than_once() -> None:
     """
     Given a task with a dependency
     When we make it dependent on the same dependency
@@ -113,7 +117,7 @@ def test_task_cannot_depend_on_another_one_more_than_once():
     assert t1.density == 1.0
 
 
-def test_removing_dependent_task_leads_to_correct_density():
+def test_removing_dependent_task_leads_to_correct_density() -> None:
     """
     Given a task with a dependency
     When we remove the dependency
@@ -142,7 +146,7 @@ def test_removing_dependent_task_leads_to_correct_density():
     assert t1.density == 1.0
 
 
-def test_task_should_be_active_if_activation_time_is_in_the_past():
+def test_task_should_be_active_if_activation_time_is_in_the_past() -> None:
     """
     Given a task created with activation_time = now
     When we call is_task_active_at now + 1 day
@@ -158,7 +162,7 @@ def test_task_should_be_active_if_activation_time_is_in_the_past():
     assert is_task_active_at(t1, datetime.now() + timedelta(days=1))
 
 
-def test_task_should_be_inactive_if_activation_time_is_in_the_future():
+def test_task_should_be_inactive_if_activation_time_is_in_the_future() -> None:
     """
     Given a task created with activation_time = now + 1 day
     When we call is_task_active_at now
