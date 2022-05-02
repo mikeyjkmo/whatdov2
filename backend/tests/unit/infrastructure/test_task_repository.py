@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime
 from typing import Any, Callable
 from uuid import UUID
-from whatdo2.domain.task.public import create_task, TaskType, make_dependent_on
+from whatdo2.domain.task.public import create_task, TaskType, make_prerequisite_of
 from whatdo2.infrastructure.task_repository import MongoTaskRepository, TaskRepository
 from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
 import pytest
@@ -53,7 +53,7 @@ async def test_save_and_get(
         task_type=TaskType.HOME,
         activation_time=now,
     )
-    new_task = make_dependent_on(original_task, [dep_task])
+    new_task = make_prerequisite_of(original_task, [dep_task])
 
     await repository.save(dep_task)
     await repository.save(new_task)

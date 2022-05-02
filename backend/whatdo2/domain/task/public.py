@@ -28,36 +28,37 @@ def create_task(
         importance=importance,
         time=time,
         task_type=task_type,
-        depends_on=(),
+        is_prerequisite_for=(),
         activation_time=activation_time,
     )
     return _calculate_density(partially_initialized)
 
 
-def make_dependent_on(task: Task, dependencies_to_add: List[Task]) -> Task:
+def make_prerequisite_of(task: Task, dependencies_to_add: List[Task]) -> Task:
     """
-    Make this task dependent on another one
+    Make this task a prerequisite of another one
 
     The task's effective_density will be recalculated as the maximum of its own
     and its dependencie's densities
     """
-    existing_dependency_ids = set(t.id for t in task.depends_on)
+    existing_dependency_ids = set(t.id for t in task.is_prerequisite_for)
     new_dependencies_to_add = [
         DependentTask.from_task(t)
-        for t in dependencies_to_add if t.id not in existing_dependency_ids
+        for t in dependencies_to_add
+        if t.id not in existing_dependency_ids
     ]
 
     result = dc.replace(
         task,
-        depends_on=(
-            *task.depends_on,
+        is_prerequisite_for=(
+            *task.is_prerequisite_for,
             *new_dependencies_to_add,
         ),
     )
     return _calculate_density(result)
 
 
-def remove_dependencies(task: Task, dependencies_to_remove: List[Task]) -> Task:
+def remove_as_prequisite_of(task: Task, dependencies_to_remove: List[Task]) -> Task:
     """
     Remove dependent tasks from a given task
 
@@ -67,7 +68,9 @@ def remove_dependencies(task: Task, dependencies_to_remove: List[Task]) -> Task:
     remove_ids = [t.id for t in dependencies_to_remove]
     result = dc.replace(
         task,
-        depends_on=tuple(t for t in task.depends_on if t.id not in remove_ids),
+        is_prerequisite_for=tuple(
+            t for t in task.is_prerequisite_for if t.id not in remove_ids
+        ),
     )
     return _calculate_density(result)
 
@@ -81,8 +84,8 @@ def is_task_active_at(task: Task, time: datetime) -> bool:
 
 __all__ = [
     "create_task",
-    "make_dependent_on",
-    "remove_dependencies",
+    "make_prerequisite_of",
+    "remove_as_prequisite_of",
     "is_task_active_at",
     "TaskType",
     "Task",

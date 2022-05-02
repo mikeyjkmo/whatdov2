@@ -41,13 +41,13 @@ class DependentTask(BaseTask):
     def from_raw(cls: Type["DependentTask"], data: Dict[Any, Any]) -> "DependentTask":
         init_data = data.copy()
         del init_data["_id"]
-        del init_data["depends_on"]
+        del init_data["is_prerequisite_for"]
         return cls(**init_data)
 
 
 @dc.dataclass(frozen=True)
 class PartiallyInitializedTask(BaseTask):
-    depends_on: Tuple[DependentTask, ...]
+    is_prerequisite_for: Tuple[DependentTask, ...]
 
 
 @dc.dataclass(frozen=True)

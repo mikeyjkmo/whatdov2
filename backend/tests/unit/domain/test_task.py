@@ -5,8 +5,8 @@ from whatdo2.domain.task.public import (
     create_task,
     TaskType,
     is_task_active_at,
-    make_dependent_on,
-    remove_dependencies,
+    make_prerequisite_of,
+    remove_as_prequisite_of,
 )
 
 
@@ -52,10 +52,10 @@ def test_created_task_has_correct_density(
     assert t1.effective_density == expected_density
 
 
-def test_task_takes_max_density_of_dependencies_and_self() -> None:
+def test_task_takes_max_density_of_dependents_and_self() -> None:
     """
     Given a task
-    When we make it dependent on other tasks
+    When we make it a prerequisite of other tasks
     Then the task's effective_density should be the maximum of its own
       and all of its dependent tasks and the task's density shall remain
       the same
@@ -82,9 +82,9 @@ def test_task_takes_max_density_of_dependencies_and_self() -> None:
         activation_time=datetime.now(),
     )
 
-    t = make_dependent_on(t1, [t2, t3])
+    t = make_prerequisite_of(t1, [t2, t3])
 
-    assert t.depends_on == (
+    assert t.is_prerequisite_for == (
         DependentTask.from_task(t2),
         DependentTask.from_task(t3),
     )
@@ -95,7 +95,7 @@ def test_task_takes_max_density_of_dependencies_and_self() -> None:
 def test_task_takes_max_density_of_effective_density() -> None:
     """
     Given two tasks, both with dependent tasks
-    When we make the first one dependent on the other
+    When we make the first one a prerequisite of the other
     Then the task's effective_density should be the maximum of its own and the other's
       effective density
     """
@@ -121,10 +121,10 @@ def test_task_takes_max_density_of_effective_density() -> None:
         activation_time=datetime.now(),
     )
 
-    t2 = make_dependent_on(t2, [t3])
-    t = make_dependent_on(t1, [t2])
+    t2 = make_prerequisite_of(t2, [t3])
+    t = make_prerequisite_of(t1, [t2])
 
-    assert t.depends_on == (
+    assert t.is_prerequisite_for == (
         DependentTask.from_task(t2),
     )
     assert t.effective_density == 1.6
@@ -134,8 +134,8 @@ def test_task_takes_max_density_of_effective_density() -> None:
 def test_task_cannot_depend_on_another_one_more_than_once() -> None:
     """
     Given a task with a dependency
-    When we make it dependent on the same dependency
-    Then dependencies for the task will not change
+    When we make it a prerequisite of the same dependency
+    Then dependents for the task will not change
     """
     t1 = create_task(
         name="hello",
@@ -152,10 +152,10 @@ def test_task_cannot_depend_on_another_one_more_than_once() -> None:
         activation_time=datetime.now(),
     )
 
-    t1 = make_dependent_on(t1, [t2])
-    t1 = make_dependent_on(t1, [t2])
+    t1 = make_prerequisite_of(t1, [t2])
+    t1 = make_prerequisite_of(t1, [t2])
 
-    assert t1.depends_on == (DependentTask.from_task(t2),)
+    assert t1.is_prerequisite_for == (DependentTask.from_task(t2),)
     assert t1.effective_density == 1.6
     assert t1.density == 1.0
 
@@ -181,10 +181,10 @@ def test_removing_dependent_task_leads_to_correct_density() -> None:
         activation_time=datetime.now(),
     )
 
-    t1 = make_dependent_on(t1, [t2])
-    t1 = remove_dependencies(t1, [t2])
+    t1 = make_prerequisite_of(t1, [t2])
+    t1 = remove_as_prequisite_of(t1, [t2])
 
-    assert t1.depends_on == ()
+    assert t1.is_prerequisite_for == ()
     assert t1.effective_density == 1.0
     assert t1.density == 1.0
 
