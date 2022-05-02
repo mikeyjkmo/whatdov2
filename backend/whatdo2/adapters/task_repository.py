@@ -4,7 +4,7 @@ from uuid import UUID
 
 import motor.motor_asyncio
 
-from whatdo2.domain.task.public import Task
+from whatdo2.domain.task.core import Task
 
 
 class TaskRepository(metaclass=ABCMeta):

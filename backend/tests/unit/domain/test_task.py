@@ -2,9 +2,12 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from whatdo2.domain.task.public import (TaskType, create_task,
-                                        make_prerequisite_of,
-                                        remove_as_prequisite_of)
+from whatdo2.domain.task.core import (
+    TaskType,
+    create_task,
+    make_prerequisite_of,
+    remove_as_prequisite_of,
+)
 from whatdo2.domain.task.typedefs import DependentTask
 
 
