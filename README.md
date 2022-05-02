@@ -1,7 +1,8 @@
 # WhatDo? (V2)
 
-WhatDo is an app that helps to prioritise the things you need to do. It uses
-a weighted shorted-processing time algorithm.
+WhatDo is an app that helps to prioritise the things you need to do. At any given
+time, it will provide you with the **single most important task** you should be
+doing right now. It does this using a weighted shorted-processing time algorithm.
 
 Features supported:
 * Tasks can be made dependent on other tasks
