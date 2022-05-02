@@ -5,7 +5,7 @@ from datetime import datetime
 from pydantic.main import BaseModel
 import dataclasses as dc
 from fastapi import FastAPI
-from typing import Dict, Any, List
+from typing import List
 from motor.motor_asyncio import AsyncIOMotorClient
 from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
 
@@ -53,15 +53,10 @@ class TaskResponse(BaseModel):
 
 @app.get("/tasks")
 async def task_list() -> TaskListReponse:
-    def _clean(t: Dict[Any, Any]) -> Dict[Any, Any]:
-        result = t.copy()
-        del result["_id"]
-        return result
-
     return TaskListReponse.parse_obj({
         "tasks": [
-            _clean(t)
-            for t in await db.tasks.find()
+            dict(t) for t in
+            await db.tasks.find()
             .sort("effective_density", -1)
             .to_list(length=None)
         ]
