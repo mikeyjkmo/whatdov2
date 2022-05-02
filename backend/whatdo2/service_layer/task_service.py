@@ -8,7 +8,7 @@ from datetime import datetime
 
 class TaskService:
     def __init__(self) -> None:
-        self._get_current_time = datetime.now
+        self._get_current_time = datetime.utcnow
         self._repository = MongoTaskRepository(
             db=AsyncIOMotorClient(MONGO_CONNECTION_STR)[MONGO_DB_NAME]
         )

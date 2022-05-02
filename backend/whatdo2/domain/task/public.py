@@ -85,7 +85,12 @@ def set_task_active_state(
     """
     Set the task active state at the given time
     """
-    return dc.replace(task, is_active=bool(task.activation_time <= time))
+    return dc.replace(
+        task,
+        is_active=bool(
+            task.activation_time.replace(tzinfo=None) <= time.replace(tzinfo=None)
+        ),
+    )
 
 
 __all__ = [
