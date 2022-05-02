@@ -72,4 +72,5 @@ __all__ = [
     "remove_dependencies",
     "is_task_active_at",
     "TaskType",
+    "Task",
 ]
