@@ -31,7 +31,7 @@ class MongoTaskRepository(TaskRepository):
         raw_task["is_prerequisite_for"] = [
             {"id": str(t.id)} for t in task.is_prerequisite_for
         ]
-        await self.db.tasks.replace_one({"id": raw_task["id"]}, raw_task)
+        await self.db.tasks.replace_one({"id": raw_task["id"]}, raw_task, upsert=True)
 
     async def get(self, task_id: UUID) -> Task:
         raw_task = await self.db.tasks.find_one({"id": str(task_id)})
