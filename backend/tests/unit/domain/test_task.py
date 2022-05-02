@@ -45,7 +45,7 @@ def test_created_task_has_correct_density(
     Then we should get a task with the expected density and effective density,
       which will be the same.
     """
-    t1 = create_task(
+    container = create_task(
         name="hello",
         importance=importance,
         time=time,
@@ -53,14 +53,13 @@ def test_created_task_has_correct_density(
         activation_time=datetime.now(),
     )
 
-    assert t1.density == expected_density
-    assert t1.effective_density == expected_density
+    assert container.task.density == expected_density
+    assert container.task.effective_density == expected_density
 
 
 def test_task_takes_max_density_of_dependents_and_self() -> None:
     """
-    Given a task
-    When we make it a prerequisite of other tasks
+    Given a task When we make it a prerequisite of other tasks
     Then the task's effective_density should be the maximum of its own
       and all of its dependent tasks and the task's density shall remain
       the same
@@ -69,39 +68,40 @@ def test_task_takes_max_density_of_dependents_and_self() -> None:
     then there will be a margin of 0.1 added to it, to ensure that
     the task is higher priority than those that depend on it.
     """
-    t1 = create_task(
+    container = create_task(
         name="hello",
         importance=5,
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
     )
+
     t2 = create_task(
         name="hello",
         importance=8,
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
-    )
+    ).task
     t3 = create_task(
         name="hello",
         importance=4,
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
-    )
+    ).task
 
-    t = AddDependentTasks(
+    container = AddDependentTasks(
         current_time=datetime.now(),
         dependent_tasks=[t2, t3],
-    )(t1)
+    )(container)
 
-    assert t.is_prerequisite_for == (
+    assert container.task.is_prerequisite_for == (
         DependentTask.from_task(t2),
         DependentTask.from_task(t3),
     )
-    assert t.effective_density == pytest.approx(1.7)
-    assert t.density == 1.0
+    assert container.task.effective_density == pytest.approx(1.7)
+    assert container.task.density == 1.0
 
 
 def test_task_takes_max_density_of_effective_density() -> None:
@@ -111,40 +111,44 @@ def test_task_takes_max_density_of_effective_density() -> None:
     Then the task's effective_density should be the maximum of its own and the other's
       effective density
     """
-    t1 = create_task(
+    container = create_task(
         name="hello",
         importance=5,
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
     )
-    t2 = create_task(
+    container2 = create_task(
         name="hello",
         importance=4,
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
     )
+
     t3 = create_task(
         name="hello",
         importance=8,
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
-    )
+    ).task
 
-    t2 = AddDependentTasks(
+    container2 = AddDependentTasks(
         current_time=datetime.now(),
         dependent_tasks=[t3],
-    )(t2)
-    t = AddDependentTasks(
-        current_time=datetime.now(),
-        dependent_tasks=[t2],
-    )(t1)
+    )(container2)
 
-    assert t.is_prerequisite_for == (DependentTask.from_task(t2),)
-    assert t.effective_density == pytest.approx(1.8)
-    assert t.density == 1.0
+    container = AddDependentTasks(
+        current_time=datetime.now(),
+        dependent_tasks=[container2.task],
+    )(container)
+
+    assert container.task.is_prerequisite_for == (
+        DependentTask.from_task(container2.task),
+    )
+    assert container.task.effective_density == pytest.approx(1.8)
+    assert container.task.density == 1.0
 
 
 def test_task_cannot_depend_on_another_one_more_than_once() -> None:
@@ -153,7 +157,7 @@ def test_task_cannot_depend_on_another_one_more_than_once() -> None:
     When we make it a prerequisite of the same dependency
     Then dependents for the task will not change
     """
-    t1 = create_task(
+    container = create_task(
         name="hello",
         importance=5,
         time=5,
@@ -166,17 +170,17 @@ def test_task_cannot_depend_on_another_one_more_than_once() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
-    )
+    ).task
 
     add_dependent_task = AddDependentTasks(
         current_time=datetime.now(),
         dependent_tasks=[t2],
     )
-    t1 = pipe(add_dependent_task, add_dependent_task)(t1)
+    container = pipe(add_dependent_task, add_dependent_task)(container)
 
-    assert t1.is_prerequisite_for == (DependentTask.from_task(t2),)
-    assert t1.effective_density == pytest.approx(1.7)
-    assert t1.density == 1.0
+    assert container.task.is_prerequisite_for == (DependentTask.from_task(t2),)
+    assert container.task.effective_density == pytest.approx(1.7)
+    assert container.task.density == 1.0
 
 
 def test_removing_dependent_task_leads_to_correct_density() -> None:
@@ -185,7 +189,7 @@ def test_removing_dependent_task_leads_to_correct_density() -> None:
     When we remove the dependency
     Then the task's density should be recalculated correctly
     """
-    t1 = create_task(
+    container = create_task(
         name="hello",
         importance=5,
         time=5,
@@ -198,16 +202,16 @@ def test_removing_dependent_task_leads_to_correct_density() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
-    )
+    ).task
 
-    t1 = pipe(
+    container = pipe(
         AddDependentTasks(current_time=datetime.now(), dependent_tasks=[t2]),
         RemoveDependentTasks(current_time=datetime.now(), dependent_tasks=[t2]),
-    )(t1)
+    )(container)
 
-    assert t1.is_prerequisite_for == ()
-    assert t1.effective_density == 1.0
-    assert t1.density == 1.0
+    assert container.task.is_prerequisite_for == ()
+    assert container.task.effective_density == 1.0
+    assert container.task.density == 1.0
 
 
 def test_task_will_ignore_effective_density_of_inactive_tasks() -> None:
@@ -216,7 +220,7 @@ def test_task_will_ignore_effective_density_of_inactive_tasks() -> None:
     When we make the denser one dependent on the other
     The density of the other will not change
     """
-    t1 = create_task(
+    container = create_task(
         name="hello",
         importance=5,
         time=5,
@@ -229,15 +233,17 @@ def test_task_will_ignore_effective_density_of_inactive_tasks() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now() + timedelta(days=1),
-    )
+    ).task
 
-    t = AddDependentTasks(current_time=datetime.now(), dependent_tasks=[inactive_task])(
-        t1
-    )
+    container = AddDependentTasks(
+        current_time=datetime.now(), dependent_tasks=[inactive_task]
+    )(container)
 
-    assert t.is_prerequisite_for == (DependentTask.from_task(inactive_task),)
-    assert t.effective_density == 1.0  # unchanged
-    assert t.density == 1.0
+    assert container.task.is_prerequisite_for == (
+        DependentTask.from_task(inactive_task),
+    )
+    assert container.task.effective_density == 1.0  # unchanged
+    assert container.task.density == 1.0
 
 
 def test_task_will_have_effective_density_of_zero_if_it_is_inactive() -> None:
@@ -247,5 +253,5 @@ def test_task_will_have_effective_density_of_zero_if_it_is_inactive() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now() + timedelta(days=1),
-    )
+    ).task
     assert inactive_task.effective_density == 0

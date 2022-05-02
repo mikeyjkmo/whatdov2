@@ -42,7 +42,7 @@ async def test_save_and_get(
     now = datetime.now().replace(microsecond=0)
     create_task = CreateTask(current_time=now)
 
-    original_task = create_task(
+    container = create_task(
         name="hello",
         importance=5,
         time=5,
@@ -55,18 +55,20 @@ async def test_save_and_get(
         time=5,
         task_type=TaskType.HOME,
         activation_time=now,
-    )
-    new_task = AddDependentTasks(
+    ).task
+    container = AddDependentTasks(
         current_time=now,
         dependent_tasks=[dep_task],
-    )(original_task)
+    )(container)
 
     await repository.save(dep_task)
-    await repository.save(new_task)
+    await repository.save(container.task)
 
     # Add cleanup for task
-    request.addfinalizer(_delete_task_finalizer(event_loop, repository, new_task.id))
+    request.addfinalizer(
+        _delete_task_finalizer(event_loop, repository, container.task.id)
+    )
     request.addfinalizer(_delete_task_finalizer(event_loop, repository, dep_task.id))
 
-    result = await repository.get(task_id=new_task.id)
-    assert result == new_task
+    result = await repository.get(task_id=container.task.id)
+    assert result == container.task
