@@ -14,8 +14,8 @@ class TaskAction:
     This can be either the action to create a task or to perform
     a state change on it
     """
-    def __init__(self, at_time: datetime) -> None:
-        self._at_time = at_time
+    def __init__(self, current_time: datetime) -> None:
+        self._current_time = current_time
 
     @staticmethod
     def _calculate_density(task: Task) -> Task:
@@ -50,7 +50,7 @@ class TaskAction:
             is_active=bool(
                 task.activation_time.replace(
                     tzinfo=None,
-                ) <= self._at_time.replace(
+                ) <= self._current_time.replace(
                     tzinfo=None,
                 )
             ),
@@ -68,8 +68,8 @@ class TaskAction:
 
 
 class StateChange(TaskAction):
-    def __init__(self, at_time: datetime) -> None:
-        self._at_time = at_time
+    def __init__(self, current_time: datetime) -> None:
+        self._current_time = current_time
 
     def _transform(self, task: Task) -> Task:
         raise NotImplementedError()
@@ -104,8 +104,8 @@ class CreateTask(TaskAction):
 
 
 class AddDependentTasks(StateChange):
-    def __init__(self, at_time: datetime, dependent_tasks: List[Task]) -> None:
-        super().__init__(at_time)
+    def __init__(self, current_time: datetime, dependent_tasks: List[Task]) -> None:
+        super().__init__(current_time)
         self._dependent_tasks = dependent_tasks
 
     def _transform(self, task: Task) -> Task:
@@ -130,8 +130,8 @@ class AddDependentTasks(StateChange):
 
 
 class RemoveDependentTasks(StateChange):
-    def __init__(self, at_time: datetime, dependent_tasks: List[Task]) -> None:
-        super().__init__(at_time)
+    def __init__(self, current_time: datetime, dependent_tasks: List[Task]) -> None:
+        super().__init__(current_time)
         self._dependent_tasks = dependent_tasks
 
     def _transform(self, task: Task) -> Task:

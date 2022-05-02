@@ -24,7 +24,7 @@ class TaskService:
         task_type: TaskType,
         activation_time: datetime,
     ) -> Task:
-        create_task = core.CreateTask(at_time=self._get_current_time())
+        create_task = core.CreateTask(current_time=self._get_current_time())
         new_task = create_task(
             name=name,
             importance=importance,
@@ -40,7 +40,7 @@ class TaskService:
         t2 = await self._repository.get(task_id=dependent_task_id)
 
         add_dependent_tasks = core.AddDependentTasks(
-            at_time=self._get_current_time(),
+            current_time=self._get_current_time(),
             dependent_tasks=[t2],
         )
 

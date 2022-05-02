@@ -40,7 +40,7 @@ async def test_save_and_get(
     request: Any,
 ) -> None:
     now = datetime.now().replace(microsecond=0)
-    create_task = CreateTask(at_time=now)
+    create_task = CreateTask(current_time=now)
 
     original_task = create_task(
         name="hello",
@@ -57,7 +57,7 @@ async def test_save_and_get(
         activation_time=now,
     )
     new_task = AddDependentTasks(
-        at_time=now,
+        current_time=now,
         dependent_tasks=[dep_task],
     )(original_task)
 

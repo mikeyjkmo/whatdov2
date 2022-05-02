@@ -11,7 +11,7 @@ from whatdo2.domain.task.core import (
 from whatdo2.domain.task.typedefs import DependentTask
 from whatdo2.domain.utils import pipe
 
-create_task = CreateTask(at_time=datetime.now() + timedelta(days=1))
+create_task = CreateTask(current_time=datetime.now() + timedelta(days=1))
 
 
 @pytest.mark.parametrize(
@@ -92,7 +92,7 @@ def test_task_takes_max_density_of_dependents_and_self() -> None:
     )
 
     t = AddDependentTasks(
-        at_time=datetime.now(),
+        current_time=datetime.now(),
         dependent_tasks=[t2, t3],
     )(t1)
 
@@ -134,11 +134,11 @@ def test_task_takes_max_density_of_effective_density() -> None:
     )
 
     t2 = AddDependentTasks(
-        at_time=datetime.now(),
+        current_time=datetime.now(),
         dependent_tasks=[t3],
     )(t2)
     t = AddDependentTasks(
-        at_time=datetime.now(),
+        current_time=datetime.now(),
         dependent_tasks=[t2],
     )(t1)
 
@@ -169,7 +169,7 @@ def test_task_cannot_depend_on_another_one_more_than_once() -> None:
     )
 
     add_dependent_task = AddDependentTasks(
-        at_time=datetime.now(),
+        current_time=datetime.now(),
         dependent_tasks=[t2],
     )
     t1 = pipe(add_dependent_task, add_dependent_task)(t1)
@@ -201,8 +201,8 @@ def test_removing_dependent_task_leads_to_correct_density() -> None:
     )
 
     t1 = pipe(
-        AddDependentTasks(at_time=datetime.now(), dependent_tasks=[t2]),
-        RemoveDependentTasks(at_time=datetime.now(), dependent_tasks=[t2]),
+        AddDependentTasks(current_time=datetime.now(), dependent_tasks=[t2]),
+        RemoveDependentTasks(current_time=datetime.now(), dependent_tasks=[t2]),
     )(t1)
 
     assert t1.is_prerequisite_for == ()
@@ -231,7 +231,7 @@ def test_task_will_ignore_effective_density_of_inactive_tasks() -> None:
         activation_time=datetime.now() + timedelta(days=1),
     )
 
-    t = AddDependentTasks(at_time=datetime.now(), dependent_tasks=[t2])(t1)
+    t = AddDependentTasks(current_time=datetime.now(), dependent_tasks=[t2])(t1)
 
     assert t.is_prerequisite_for == (DependentTask.from_task(t2),)
     assert t.effective_density == 1.0  # unchanged
