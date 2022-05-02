@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime
 from typing import Any, Callable
 from uuid import UUID
-from whatdo2.domain.task.public import create_task, TaskType
+from whatdo2.domain.task.public import create_task, TaskType, make_dependent_on
 from whatdo2.infrastructure.task_repository import MongoTaskRepository, TaskRepository
 from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
 import pytest
@@ -46,13 +46,25 @@ async def test_save_and_get(
         task_type=TaskType.HOME,
         activation_time=now,
     )
-    await repository.save(original_task)
+    dep_task = create_task(
+        name="hello 2",
+        importance=8,
+        time=5,
+        task_type=TaskType.HOME,
+        activation_time=now,
+    )
+    new_task = make_dependent_on(original_task, [dep_task])
+
+    await repository.save(dep_task)
+    await repository.save(new_task)
 
     # Add cleanup for task
     request.addfinalizer(
-        _delete_task_finalizer(event_loop, repository, original_task.id)
+        _delete_task_finalizer(event_loop, repository, new_task.id)
+    )
+    request.addfinalizer(
+        _delete_task_finalizer(event_loop, repository, dep_task.id)
     )
 
-    result = await repository.get(task_id=original_task.id)
-
-    assert result == original_task
+    result = await repository.get(task_id=new_task.id)
+    assert result == new_task

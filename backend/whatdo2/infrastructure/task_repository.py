@@ -2,10 +2,11 @@ from abc import ABCMeta
 from typing import Dict, Tuple, Any
 from uuid import UUID
 import dataclasses as dc
+from whatdo2.domain.task.typedefs import DependentTask
 
 import motor.motor_asyncio
 
-from whatdo2.domain.task.public import Task, TaskType
+from whatdo2.domain.task.public import Task
 
 
 class TaskRepository(metaclass=ABCMeta):
@@ -39,10 +40,8 @@ class MongoTaskRepository(TaskRepository):
         raw_task: Dict[Any, Any],
         raw_dependencies: Tuple[Dict[Any, Any], ...],
     ) -> Task:
-        raw_task["id"] = UUID(raw_task["id"])
-        raw_task["task_type"] = TaskType[raw_task["task_type"]]
         raw_task["depends_on"] = tuple(
-            self._raw_task_to_task(t, raw_dependencies=()) for t in raw_dependencies
+            DependentTask.from_raw(t) for t in raw_dependencies
         )
         del raw_task["_id"]
         return Task(**raw_task)

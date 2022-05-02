@@ -1,4 +1,4 @@
-from typing import Tuple, Type
+from typing import Tuple, Type, Dict, Any
 from pydantic import dataclasses as dc
 from datetime import datetime
 from enum import Enum
@@ -36,6 +36,13 @@ class DependentTask(BaseTask):
             density=t.density,
             effective_density=t.effective_density,
         )
+
+    @classmethod
+    def from_raw(cls: Type["DependentTask"], data: Dict[Any, Any]) -> "DependentTask":
+        init_data = data.copy()
+        del init_data["_id"]
+        del init_data["depends_on"]
+        return cls(**init_data)
 
 
 @dc.dataclass(frozen=True)
