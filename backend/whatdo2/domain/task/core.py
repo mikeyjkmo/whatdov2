@@ -35,10 +35,11 @@ class TaskAction:
             # than those that depend on it, as it needs to be done first.
             effective_density = max_density_of_dependent_tasks + PRIORITY_DENSITY_MARGIN
 
-        task_proto = dc.asdict(task)
-        task_proto["density"] = density
-        task_proto["effective_density"] = effective_density
-        return Task(**task_proto)
+        return dc.replace(
+            task,
+            density=density,
+            effective_density=effective_density,
+        )
 
     def _calculate_active_state(self, task: Task) -> Task:
         """
