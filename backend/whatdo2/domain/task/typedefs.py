@@ -56,3 +56,15 @@ class PartiallyInitializedTask(BaseTask):
 class Task(PartiallyInitializedTask):
     density: float
     effective_density: float
+
+    @classmethod
+    def from_raw(
+        cls: Type["Task"],
+        raw_task: Dict[Any, Any],
+        raw_dependencies: Tuple[Dict[Any, Any], ...],
+    ) -> "Task":
+        raw_task["is_prerequisite_for"] = tuple(
+            DependentTask.from_raw(t) for t in raw_dependencies
+        )
+        del raw_task["_id"]
+        return cls(**raw_task)
