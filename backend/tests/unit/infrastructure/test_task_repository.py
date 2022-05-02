@@ -28,6 +28,7 @@ def _delete_task_finalizer(
         event_loop.run_until_complete(
             repository.delete(task_id=task_id),
         )
+
     return delete_task
 
 
@@ -45,6 +46,7 @@ async def test_save_and_get(
         time=5,
         task_type=TaskType.HOME,
         activation_time=now,
+        creation_time=datetime.now(),
     )
     dep_task = create_task(
         name="hello 2",
@@ -52,6 +54,7 @@ async def test_save_and_get(
         time=5,
         task_type=TaskType.HOME,
         activation_time=now,
+        creation_time=datetime.now(),
     )
     new_task = make_prerequisite_of(original_task, [dep_task])
 
@@ -59,12 +62,8 @@ async def test_save_and_get(
     await repository.save(new_task)
 
     # Add cleanup for task
-    request.addfinalizer(
-        _delete_task_finalizer(event_loop, repository, new_task.id)
-    )
-    request.addfinalizer(
-        _delete_task_finalizer(event_loop, repository, dep_task.id)
-    )
+    request.addfinalizer(_delete_task_finalizer(event_loop, repository, new_task.id))
+    request.addfinalizer(_delete_task_finalizer(event_loop, repository, dep_task.id))
 
     result = await repository.get(task_id=new_task.id)
     assert result == new_task

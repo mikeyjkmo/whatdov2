@@ -1,6 +1,6 @@
-import dataclasses as dc
 from typing import List
 import uuid
+import dataclasses as dc
 from datetime import datetime
 
 from whatdo2.domain.task.typedefs import (
@@ -18,6 +18,7 @@ def create_task(
     time: int,
     task_type: TaskType,
     activation_time: datetime,
+    creation_time: datetime,
 ) -> Task:
     """
     Public constructor for a Task
@@ -30,7 +31,9 @@ def create_task(
         task_type=task_type,
         is_prerequisite_for=(),
         activation_time=activation_time,
+        is_active=False,
     )
+    partially_initialized = set_task_active_state(partially_initialized, creation_time)
     return _calculate_density(partially_initialized)
 
 
@@ -75,18 +78,21 @@ def remove_as_prequisite_of(task: Task, dependencies_to_remove: List[Task]) -> T
     return _calculate_density(result)
 
 
-def is_task_active_at(task: Task, time: datetime) -> bool:
+def set_task_active_state(
+    task: PartiallyInitializedTask,
+    time: datetime,
+) -> PartiallyInitializedTask:
     """
-    Given a task and time, return whether it is active at this time
+    Set the task active state at the given time
     """
-    return bool(task.activation_time < time)
+    return dc.replace(task, is_active=bool(task.activation_time < time))
 
 
 __all__ = [
     "create_task",
     "make_prerequisite_of",
     "remove_as_prequisite_of",
-    "is_task_active_at",
+    "set_task_active_state",
     "TaskType",
     "Task",
 ]

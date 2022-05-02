@@ -1,10 +1,9 @@
 from whatdo2.domain.task.typedefs import DependentTask
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime
 from whatdo2.domain.task.public import (
     create_task,
     TaskType,
-    is_task_active_at,
     make_prerequisite_of,
     remove_as_prequisite_of,
 )
@@ -47,7 +46,9 @@ def test_created_task_has_correct_density(
         time=time,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
+        creation_time=datetime.now(),
     )
+
     assert t1.density == expected_density
     assert t1.effective_density == expected_density
 
@@ -70,6 +71,7 @@ def test_task_takes_max_density_of_dependents_and_self() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
+        creation_time=datetime.now(),
     )
     t2 = create_task(
         name="hello",
@@ -77,6 +79,7 @@ def test_task_takes_max_density_of_dependents_and_self() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
+        creation_time=datetime.now(),
     )
     t3 = create_task(
         name="hello",
@@ -84,6 +87,7 @@ def test_task_takes_max_density_of_dependents_and_self() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
+        creation_time=datetime.now(),
     )
 
     t = make_prerequisite_of(t1, [t2, t3])
@@ -109,6 +113,7 @@ def test_task_takes_max_density_of_effective_density() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
+        creation_time=datetime.now(),
     )
     t2 = create_task(
         name="hello",
@@ -116,6 +121,7 @@ def test_task_takes_max_density_of_effective_density() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
+        creation_time=datetime.now(),
     )
     t3 = create_task(
         name="hello",
@@ -123,14 +129,13 @@ def test_task_takes_max_density_of_effective_density() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
+        creation_time=datetime.now(),
     )
 
     t2 = make_prerequisite_of(t2, [t3])
     t = make_prerequisite_of(t1, [t2])
 
-    assert t.is_prerequisite_for == (
-        DependentTask.from_task(t2),
-    )
+    assert t.is_prerequisite_for == (DependentTask.from_task(t2),)
     assert t.effective_density == pytest.approx(1.8)
     assert t.density == 1.0
 
@@ -147,6 +152,7 @@ def test_task_cannot_depend_on_another_one_more_than_once() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
+        creation_time=datetime.now(),
     )
     t2 = create_task(
         name="hello",
@@ -154,6 +160,7 @@ def test_task_cannot_depend_on_another_one_more_than_once() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
+        creation_time=datetime.now(),
     )
 
     t1 = make_prerequisite_of(t1, [t2])
@@ -176,6 +183,7 @@ def test_removing_dependent_task_leads_to_correct_density() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
+        creation_time=datetime.now(),
     )
     t2 = create_task(
         name="hello",
@@ -183,6 +191,7 @@ def test_removing_dependent_task_leads_to_correct_density() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
+        creation_time=datetime.now(),
     )
 
     t1 = make_prerequisite_of(t1, [t2])
@@ -191,35 +200,3 @@ def test_removing_dependent_task_leads_to_correct_density() -> None:
     assert t1.is_prerequisite_for == ()
     assert t1.effective_density == 1.0
     assert t1.density == 1.0
-
-
-def test_task_should_be_active_if_activation_time_is_in_the_past() -> None:
-    """
-    Given a task created with activation_time = now
-    When we call is_task_active_at now + 1 day
-    Then the result should be true
-    """
-    t1 = create_task(
-        name="hello",
-        importance=5,
-        time=5,
-        task_type=TaskType.HOME,
-        activation_time=datetime.now(),
-    )
-    assert is_task_active_at(t1, datetime.now() + timedelta(days=1))
-
-
-def test_task_should_be_inactive_if_activation_time_is_in_the_future() -> None:
-    """
-    Given a task created with activation_time = now + 1 day
-    When we call is_task_active_at now
-    Then the result should be false
-    """
-    t1 = create_task(
-        name="hello",
-        importance=5,
-        time=5,
-        task_type=TaskType.HOME,
-        activation_time=datetime.now() + timedelta(days=1),
-    )
-    assert not is_task_active_at(t1, datetime.now())

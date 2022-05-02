@@ -17,6 +17,7 @@ class BaseTask(Entity):
     task_type: TaskType
     time: int
     activation_time: datetime
+    is_active: bool
 
 
 @dc.dataclass(frozen=True)
@@ -33,6 +34,7 @@ class DependentTask(BaseTask):
             task_type=t.task_type,
             time=t.time,
             activation_time=t.activation_time,
+            is_active=t.is_active,
             density=t.density,
             effective_density=t.effective_density,
         )

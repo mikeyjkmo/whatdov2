@@ -30,5 +30,6 @@ def _calculate_density(task: Union[PartiallyInitializedTask, Task]) -> Task:
         task_type=task.task_type,
         density=density,
         activation_time=task.activation_time,
+        is_active=task.is_active,
         effective_density=effective_density,
     )

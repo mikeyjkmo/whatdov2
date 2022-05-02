@@ -49,7 +49,7 @@ class MongoTaskRepository(TaskRepository):
     async def get(self, task_id: UUID) -> Task:
         raw_task = await self.db.tasks.find_one({"id": str(task_id)})
         raw_dependencies = await self.db.tasks.find(
-            {'id': {'$in': [t["id"] for t in raw_task["is_prerequisite_for"]]}},
+            {"id": {"$in": [t["id"] for t in raw_task["is_prerequisite_for"]]}},
         ).to_list(length=None)
         return self._raw_task_to_task(raw_task, raw_dependencies)
 
