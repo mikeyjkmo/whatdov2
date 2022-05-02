@@ -22,6 +22,9 @@ test-all:
 test-watch-all:
 	poetry run ptw -- tests -vvv
 
+develop:
+	poetry run uvicorn whatdo2.entrypoints.fast_api:app --host 0.0.0.0 --reload
+
 .PHONY: \
 	formatting \
 	lint \
@@ -30,4 +33,5 @@ test-watch-all:
 	test-watch \
 	test-all \
 	test-watch-all \
+	develop \
 	type-check
