@@ -92,6 +92,45 @@ def test_task_takes_max_density_of_dependencies_and_self() -> None:
     assert t.density == 1.0
 
 
+def test_task_takes_max_density_of_effective_density() -> None:
+    """
+    Given two tasks, both with dependent tasks
+    When we make the first one dependent on the other
+    Then the task's effective_density should be the maximum of its own and the other's
+      effective density
+    """
+    t1 = create_task(
+        name="hello",
+        importance=5,
+        time=5,
+        task_type=TaskType.HOME,
+        activation_time=datetime.now(),
+    )
+    t2 = create_task(
+        name="hello",
+        importance=4,
+        time=5,
+        task_type=TaskType.HOME,
+        activation_time=datetime.now(),
+    )
+    t3 = create_task(
+        name="hello",
+        importance=8,
+        time=5,
+        task_type=TaskType.HOME,
+        activation_time=datetime.now(),
+    )
+
+    t2 = make_dependent_on(t2, [t3])
+    t = make_dependent_on(t1, [t2])
+
+    assert t.depends_on == (
+        DependentTask.from_task(t2),
+    )
+    assert t.effective_density == 1.6
+    assert t.density == 1.0
+
+
 def test_task_cannot_depend_on_another_one_more_than_once() -> None:
     """
     Given a task with a dependency
