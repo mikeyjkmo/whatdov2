@@ -3,7 +3,12 @@ from typing import List
 import uuid
 from datetime import datetime
 
-from whatdo2.domain.task.typedefs import TaskType, PartiallyInitializedTask, Task
+from whatdo2.domain.task.typedefs import (
+    TaskType,
+    PartiallyInitializedTask,
+    Task,
+    DependentTask,
+)
 from whatdo2.domain.task.private import _calculate_density
 
 
@@ -36,11 +41,18 @@ def make_dependent_on(task: Task, dependencies_to_add: List[Task]) -> Task:
     The task's effective_density will be recalculated as the maximum of its own
     and its dependencie's densities
     """
-    # Filter out tasks that are already parents
-    new_dependencies = [t for t in dependencies_to_add if t not in task.depends_on]
+    existing_dependency_ids = set(t.id for t in task.depends_on)
+    new_dependencies_to_add = [
+        DependentTask.from_task(t)
+        for t in dependencies_to_add if t.id not in existing_dependency_ids
+    ]
+
     result = dc.replace(
         task,
-        depends_on=(*task.depends_on, *new_dependencies),
+        depends_on=(
+            *task.depends_on,
+            *new_dependencies_to_add,
+        ),
     )
     return _calculate_density(result)
 
@@ -52,9 +64,10 @@ def remove_dependencies(task: Task, dependencies_to_remove: List[Task]) -> Task:
     The task's effective_density will be recalculated as the maximum of its own
     and its dependencie's densities
     """
+    remove_ids = [t.id for t in dependencies_to_remove]
     result = dc.replace(
         task,
-        depends_on=tuple(t for t in task.depends_on if t not in dependencies_to_remove),
+        depends_on=tuple(t for t in task.depends_on if t.id not in remove_ids),
     )
     return _calculate_density(result)
 

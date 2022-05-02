@@ -1,3 +1,4 @@
+from whatdo2.domain.task.typedefs import DependentTask
 import pytest
 from datetime import datetime, timedelta
 from whatdo2.domain.task.public import (
@@ -83,7 +84,10 @@ def test_task_takes_max_density_of_dependencies_and_self() -> None:
 
     t = make_dependent_on(t1, [t2, t3])
 
-    assert t.depends_on == (t2, t3)
+    assert t.depends_on == (
+        DependentTask.from_task(t2),
+        DependentTask.from_task(t3),
+    )
     assert t.effective_density == 1.6
     assert t.density == 1.0
 
@@ -112,7 +116,7 @@ def test_task_cannot_depend_on_another_one_more_than_once() -> None:
     t1 = make_dependent_on(t1, [t2])
     t1 = make_dependent_on(t1, [t2])
 
-    assert t1.depends_on == (t2,)
+    assert t1.depends_on == (DependentTask.from_task(t2),)
     assert t1.effective_density == 1.6
     assert t1.density == 1.0
 

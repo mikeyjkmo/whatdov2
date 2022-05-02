@@ -1,5 +1,5 @@
 from uuid import UUID
-import dataclasses as dc
+from pydantic import dataclasses as dc
 
 
 @dc.dataclass(frozen=True)

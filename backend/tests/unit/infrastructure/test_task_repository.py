@@ -9,6 +9,9 @@ import pytest
 from motor.motor_asyncio import AsyncIOMotorClient
 
 
+__pytestmark__ = ["db_unit_test"]
+
+
 @pytest.fixture(name="repository")
 def mongo_repository() -> MongoTaskRepository:
     return MongoTaskRepository(
