@@ -1,5 +1,6 @@
 from typing import Union
-from whatdo2.domain.task.typedefs import Task, PartiallyInitializedTask
+
+from whatdo2.domain.task.typedefs import PartiallyInitializedTask, Task
 
 PRIORITY_DENSITY_MARGIN = 0.1
 

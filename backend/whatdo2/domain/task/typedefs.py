@@ -1,7 +1,9 @@
-from typing import Tuple, Type, Dict, Any
-from pydantic import dataclasses as dc
 from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, Tuple, Type
+
+from pydantic import dataclasses as dc
+
 from whatdo2.domain.typedefs import Entity
 
 

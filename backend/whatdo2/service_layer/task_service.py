@@ -1,10 +1,12 @@
-from uuid import UUID
-from motor.motor_asyncio import AsyncIOMotorClient
-from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
-from whatdo2.adapters.task_repository import MongoTaskRepository
-from whatdo2.domain.task.typedefs import TaskType, Task
-from whatdo2.domain.task import public as core
 from datetime import datetime
+from uuid import UUID
+
+from motor.motor_asyncio import AsyncIOMotorClient
+
+from whatdo2.adapters.task_repository import MongoTaskRepository
+from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
+from whatdo2.domain.task import public as core
+from whatdo2.domain.task.typedefs import Task, TaskType
 
 
 class TaskService:

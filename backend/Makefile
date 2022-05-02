@@ -1,8 +1,8 @@
 format-check:
-	poetry run black --check .
+	poetry run black --check . && poetry run isort --check .
 
 format:
-	poetry run black .
+	poetry run black . && poetry run isort .
 
 type-check:
 	poetry run mypy .

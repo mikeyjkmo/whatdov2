@@ -2,12 +2,15 @@ import asyncio
 from datetime import datetime
 from typing import Any, Callable
 from uuid import UUID
-from whatdo2.domain.task.public import create_task, TaskType, make_prerequisite_of
-from whatdo2.adapters.task_repository import MongoTaskRepository, TaskRepository
-from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
+
 import pytest
 from motor.motor_asyncio import AsyncIOMotorClient
 
+from whatdo2.adapters.task_repository import (MongoTaskRepository,
+                                              TaskRepository)
+from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
+from whatdo2.domain.task.public import (TaskType, create_task,
+                                        make_prerequisite_of)
 
 __pytestmark__ = ["db_unit_test"]
 

@@ -1,13 +1,15 @@
-from uuid import UUID
-from whatdo2.service_layer.task_service import TaskService
-from whatdo2.domain.task.typedefs import TaskType
-from datetime import datetime
-from pydantic.main import BaseModel
 import dataclasses as dc
-from fastapi import FastAPI
+from datetime import datetime
 from typing import List
+from uuid import UUID
+
+from fastapi import FastAPI
 from motor.motor_asyncio import AsyncIOMotorClient
+from pydantic.main import BaseModel
+
 from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
+from whatdo2.domain.task.typedefs import TaskType
+from whatdo2.service_layer.task_service import TaskService
 
 app = FastAPI()
 db = AsyncIOMotorClient(MONGO_CONNECTION_STR)[MONGO_DB_NAME]
@@ -53,14 +55,16 @@ class TaskResponse(BaseModel):
 
 @app.get("/tasks")
 async def task_list() -> TaskListReponse:
-    return TaskListReponse.parse_obj({
-        "tasks": [
-            dict(t) for t in
-            await db.tasks.find()
-            .sort("effective_density", -1)
-            .to_list(length=None)
-        ]
-    })
+    return TaskListReponse.parse_obj(
+        {
+            "tasks": [
+                dict(t)
+                for t in await db.tasks.find()
+                .sort("effective_density", -1)
+                .to_list(length=None)
+            ]
+        }
+    )
 
 
 @app.post("/tasks")

@@ -1,6 +1,6 @@
+import dataclasses as dc
 from abc import ABCMeta
 from uuid import UUID
-import dataclasses as dc
 
 import motor.motor_asyncio
 

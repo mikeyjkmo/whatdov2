@@ -1,15 +1,12 @@
-from typing import List
-import uuid
 import dataclasses as dc
+import uuid
 from datetime import datetime
+from typing import List
 
-from whatdo2.domain.task.typedefs import (
-    TaskType,
-    PartiallyInitializedTask,
-    Task,
-    DependentTask,
-)
 from whatdo2.domain.task.private import _calculate_density
+from whatdo2.domain.task.typedefs import (DependentTask,
+                                          PartiallyInitializedTask, Task,
+                                          TaskType)
 
 
 def create_task(

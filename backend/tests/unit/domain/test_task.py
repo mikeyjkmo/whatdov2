@@ -1,12 +1,11 @@
-from whatdo2.domain.task.typedefs import DependentTask
-import pytest
 from datetime import datetime, timedelta
-from whatdo2.domain.task.public import (
-    create_task,
-    TaskType,
-    make_prerequisite_of,
-    remove_as_prequisite_of,
-)
+
+import pytest
+
+from whatdo2.domain.task.public import (TaskType, create_task,
+                                        make_prerequisite_of,
+                                        remove_as_prequisite_of)
+from whatdo2.domain.task.typedefs import DependentTask
 
 
 @pytest.mark.parametrize(
