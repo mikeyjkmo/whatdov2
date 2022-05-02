@@ -59,6 +59,10 @@ def test_task_takes_max_density_of_dependents_and_self() -> None:
     Then the task's effective_density should be the maximum of its own
       and all of its dependent tasks and the task's density shall remain
       the same
+
+    NOTE: if it's taking on the density of one of the dependent tasks,
+    then there will be a margin of 0.1 added to it, to ensure that
+    the task is higher priority than those that depend on it.
     """
     t1 = create_task(
         name="hello",
@@ -88,7 +92,7 @@ def test_task_takes_max_density_of_dependents_and_self() -> None:
         DependentTask.from_task(t2),
         DependentTask.from_task(t3),
     )
-    assert t.effective_density == 1.6
+    assert t.effective_density == pytest.approx(1.7)
     assert t.density == 1.0
 
 
@@ -127,7 +131,7 @@ def test_task_takes_max_density_of_effective_density() -> None:
     assert t.is_prerequisite_for == (
         DependentTask.from_task(t2),
     )
-    assert t.effective_density == 1.6
+    assert t.effective_density == pytest.approx(1.8)
     assert t.density == 1.0
 
 
@@ -156,7 +160,7 @@ def test_task_cannot_depend_on_another_one_more_than_once() -> None:
     t1 = make_prerequisite_of(t1, [t2])
 
     assert t1.is_prerequisite_for == (DependentTask.from_task(t2),)
-    assert t1.effective_density == 1.6
+    assert t1.effective_density == pytest.approx(1.7)
     assert t1.density == 1.0
 
 
