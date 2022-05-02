@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Tuple, Type
+from typing import Any, Dict, Optional, Tuple, Type
 
 from pydantic import dataclasses as dc
 
@@ -29,6 +29,11 @@ class DependentTask(BaseTask):
 
     @classmethod
     def from_task(cls: Type["DependentTask"], t: "Task") -> "DependentTask":
+        if t.density is None or t.effective_density is None:
+            raise ValueError(
+                "Initialized task cannot have None as density or effective_density",
+            )
+
         return cls(
             id=t.id,
             name=t.name,
@@ -50,14 +55,10 @@ class DependentTask(BaseTask):
 
 
 @dc.dataclass(frozen=True)
-class PartiallyInitializedTask(BaseTask):
-    is_prerequisite_for: Tuple[DependentTask, ...]
-
-
-@dc.dataclass(frozen=True)
-class Task(PartiallyInitializedTask):
-    density: float
-    effective_density: float
+class Task(BaseTask):
+    density: Optional[float] = None
+    effective_density: Optional[float] = None
+    is_prerequisite_for: Tuple[DependentTask, ...] = ()
 
     @classmethod
     def from_raw(

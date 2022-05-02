@@ -8,7 +8,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from whatdo2.adapters.task_repository import MongoTaskRepository, TaskRepository
 from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
-from whatdo2.domain.task.core import TaskType, create_task, make_prerequisite_of
+from whatdo2.domain.task.core import AddDependentTasks, CreateTask, TaskType
 
 __pytestmark__ = ["db_unit_test"]
 
@@ -40,6 +40,7 @@ async def test_save_and_get(
     request: Any,
 ) -> None:
     now = datetime.now().replace(microsecond=0)
+    create_task = CreateTask(at_time=now)
 
     original_task = create_task(
         name="hello",
@@ -47,7 +48,6 @@ async def test_save_and_get(
         time=5,
         task_type=TaskType.HOME,
         activation_time=now,
-        creation_time=datetime.now(),
     )
     dep_task = create_task(
         name="hello 2",
@@ -55,9 +55,11 @@ async def test_save_and_get(
         time=5,
         task_type=TaskType.HOME,
         activation_time=now,
-        creation_time=datetime.now(),
     )
-    new_task = make_prerequisite_of(original_task, [dep_task])
+    new_task = AddDependentTasks(
+        at_time=now,
+        dependent_tasks=[dep_task],
+    )(original_task)
 
     await repository.save(dep_task)
     await repository.save(new_task)

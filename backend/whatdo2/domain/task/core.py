@@ -1,129 +1,153 @@
 import dataclasses as dc
 import uuid
 from datetime import datetime
-from typing import List, Union
+from typing import List
 
-from whatdo2.domain.task.typedefs import (
-    DependentTask,
-    PartiallyInitializedTask,
-    Task,
-    TaskType,
-)
+from whatdo2.domain.task.typedefs import DependentTask, Task, TaskType
+from whatdo2.domain.utils import pipe
 
 PRIORITY_DENSITY_MARGIN = 0.1
 
 
-def _calculate_density(task: Union[PartiallyInitializedTask, Task]) -> Task:
+class TaskAction:
     """
-    Given a self, return a new self with the calculated density
+    This can be either the action to create a task or to perform
+    a state change on it
     """
-    density = float(task.importance / task.time)
-    max_density_of_dependent_tasks = max(
-        [t.effective_density for t in task.is_prerequisite_for if t.is_active] + [0]
-    )
+    def __init__(self, at_time: datetime) -> None:
+        self._at_time = at_time
 
-    effective_density = density
-    if max_density_of_dependent_tasks >= density:
-        # If the density is smaller than the maximum of its dependent
-        # tasks, this task should take on the density of that maximum, plus
-        # a small margin -- this ensures that the task is more important
-        # than those that depend on it, as it needs to be done first.
-        effective_density = max_density_of_dependent_tasks + PRIORITY_DENSITY_MARGIN
+    @staticmethod
+    def _calculate_density(task: Task) -> Task:
+        """
+        Given a task, return a new task with the calculated density
+        """
+        density = float(task.importance / task.time)
+        max_density_of_dependent_tasks = max(
+            [t.effective_density for t in task.is_prerequisite_for if t.is_active] + [0]
+        )
 
-    task_proto = dc.asdict(task)
-    task_proto["density"] = density
-    task_proto["effective_density"] = effective_density
-    return Task(**task_proto)
+        effective_density = density
+        if max_density_of_dependent_tasks >= density:
+            # If the density is smaller than the maximum of its dependent
+            # tasks, this task should take on the density of that maximum, plus
+            # a small margin -- this ensures that the task is more important
+            # than those that depend on it, as it needs to be done first.
+            effective_density = max_density_of_dependent_tasks + PRIORITY_DENSITY_MARGIN
 
+        task_proto = dc.asdict(task)
+        task_proto["density"] = density
+        task_proto["effective_density"] = effective_density
+        return Task(**task_proto)
 
-def create_task(
-    name: str,
-    importance: int,
-    time: int,
-    task_type: TaskType,
-    activation_time: datetime,
-    creation_time: datetime,
-) -> Task:
-    """
-    Public constructor for a Task
-    """
-    partially_initialized = PartiallyInitializedTask(
-        id=uuid.uuid4(),
-        name=name,
-        importance=importance,
-        time=time,
-        task_type=task_type,
-        is_prerequisite_for=(),
-        activation_time=activation_time,
-        is_active=False,
-    )
-    partially_initialized = update_task_active_state(
-        partially_initialized, creation_time
-    )
-    return _calculate_density(partially_initialized)
+    def _calculate_active_state(self, task: Task) -> Task:
+        """
+        Set the task active state at the given time
+        """
+        return dc.replace(
+            task,
+            is_active=bool(
+                task.activation_time.replace(
+                    tzinfo=None,
+                ) <= self._at_time.replace(
+                    tzinfo=None,
+                )
+            ),
+        )
 
-
-def make_prerequisite_of(task: Task, dependents_to_add: List[Task]) -> Task:
-    """
-    Make this task a prerequisite of another one
-
-    The task's effective_density will be recalculated as the maximum of its own
-    and its dependencie's densities
-    """
-    existing_dependency_ids = set(t.id for t in task.is_prerequisite_for)
-    new_dependents_to_add = [
-        DependentTask.from_task(t)
-        for t in dependents_to_add
-        if t.id not in existing_dependency_ids
-    ]
-
-    result = dc.replace(
-        task,
-        is_prerequisite_for=(
-            *task.is_prerequisite_for,
-            *new_dependents_to_add,
-        ),
-    )
-    return _calculate_density(result)
+    def _ensure_valid_state(self, task: Task) -> Task:
+        """
+        Given a task, ensure that it's state is valid by calculating
+        its density and is_active state
+        """
+        return pipe(
+            self._calculate_density,
+            self._calculate_active_state,
+        )(task)
 
 
-def remove_as_prequisite_of(task: Task, dependents_to_remove: List[Task]) -> Task:
-    """
-    Remove dependent tasks from a given task
+class StateChange(TaskAction):
+    def __init__(self, at_time: datetime) -> None:
+        self._at_time = at_time
 
-    The task's effective_density will be recalculated as the maximum of its own
-    and its dependencie's densities
-    """
-    remove_ids = [t.id for t in dependents_to_remove]
-    result = dc.replace(
-        task,
-        is_prerequisite_for=tuple(
-            t for t in task.is_prerequisite_for if t.id not in remove_ids
-        ),
-    )
-    return _calculate_density(result)
+    def _transform(self, task: Task) -> Task:
+        raise NotImplementedError()
+
+    def __call__(self, task: Task) -> Task:
+        return pipe(
+            self._transform,
+            self._ensure_valid_state
+        )(task)
 
 
-def update_task_active_state(
-    task: PartiallyInitializedTask,
-    time: datetime,
-) -> PartiallyInitializedTask:
-    """
-    Set the task active state at the given time
-    """
-    return dc.replace(
-        task,
-        is_active=bool(
-            task.activation_time.replace(tzinfo=None) <= time.replace(tzinfo=None)
-        ),
-    )
+class CreateTask(TaskAction):
+    def __call__(
+        self,
+        name: str,
+        importance: int,
+        time: int,
+        task_type: TaskType,
+        activation_time: datetime,
+    ) -> Task:
+        t = Task(
+            id=uuid.uuid4(),
+            name=name,
+            importance=importance,
+            time=time,
+            task_type=task_type,
+            is_prerequisite_for=(),
+            activation_time=activation_time,
+            is_active=False,
+        )
+        return self._ensure_valid_state(t)
+
+
+class AddDependentTasks(StateChange):
+    def __init__(self, at_time: datetime, dependent_tasks: List[Task]) -> None:
+        super().__init__(at_time)
+        self._dependent_tasks = dependent_tasks
+
+    def _transform(self, task: Task) -> Task:
+        """
+        Add dependent tasks to the given task.
+        """
+        existing_dependency_ids = set(t.id for t in task.is_prerequisite_for)
+        new_dependents_to_add = [
+            DependentTask.from_task(t)
+            for t in self._dependent_tasks
+            if t.id not in existing_dependency_ids
+        ]
+
+        result = dc.replace(
+            task,
+            is_prerequisite_for=(
+                *task.is_prerequisite_for,
+                *new_dependents_to_add,
+            ),
+        )
+        return result
+
+
+class RemoveDependentTasks(StateChange):
+    def __init__(self, at_time: datetime, dependent_tasks: List[Task]) -> None:
+        super().__init__(at_time)
+        self._dependent_tasks = dependent_tasks
+
+    def _transform(self, task: Task) -> Task:
+        """
+        Remove dependent tasks from a given task
+        """
+        remove_ids = [t.id for t in self._dependent_tasks]
+        result = dc.replace(
+            task,
+            is_prerequisite_for=tuple(
+                t for t in task.is_prerequisite_for if t.id not in remove_ids
+            ),
+        )
+        return result
 
 
 __all__ = [
-    "create_task",
-    "make_prerequisite_of",
-    "remove_as_prequisite_of",
-    "update_task_active_state",
     "TaskType",
     "Task",
 ]

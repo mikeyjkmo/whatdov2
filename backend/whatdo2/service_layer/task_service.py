@@ -24,13 +24,13 @@ class TaskService:
         task_type: TaskType,
         activation_time: datetime,
     ) -> Task:
-        new_task = core.create_task(
+        create_task = core.CreateTask(at_time=self._get_current_time())
+        new_task = create_task(
             name=name,
             importance=importance,
             time=time,
             task_type=task_type,
             activation_time=activation_time,
-            creation_time=self._get_current_time(),
         )
         await self._repository.save(new_task)
         return new_task
@@ -39,7 +39,12 @@ class TaskService:
         t1 = await self._repository.get(task_id=task_id)
         t2 = await self._repository.get(task_id=dependent_task_id)
 
-        new_t1 = core.make_prerequisite_of(t1, [t2])
-        await self._repository.save(new_t1)
+        add_dependent_tasks = core.AddDependentTasks(
+            at_time=self._get_current_time(),
+            dependent_tasks=[t2],
+        )
 
-        return new_t1
+        result = add_dependent_tasks(t1)
+        await self._repository.save(result)
+
+        return result

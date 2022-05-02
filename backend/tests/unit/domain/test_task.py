@@ -3,12 +3,15 @@ from datetime import datetime, timedelta
 import pytest
 
 from whatdo2.domain.task.core import (
+    AddDependentTasks,
+    CreateTask,
+    RemoveDependentTasks,
     TaskType,
-    create_task,
-    make_prerequisite_of,
-    remove_as_prequisite_of,
 )
 from whatdo2.domain.task.typedefs import DependentTask
+from whatdo2.domain.utils import pipe
+
+create_task = CreateTask(at_time=datetime.now() + timedelta(days=1))
 
 
 @pytest.mark.parametrize(
@@ -48,7 +51,6 @@ def test_created_task_has_correct_density(
         time=time,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
-        creation_time=datetime.now(),
     )
 
     assert t1.density == expected_density
@@ -73,7 +75,6 @@ def test_task_takes_max_density_of_dependents_and_self() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
-        creation_time=datetime.now(),
     )
     t2 = create_task(
         name="hello",
@@ -81,7 +82,6 @@ def test_task_takes_max_density_of_dependents_and_self() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
-        creation_time=datetime.now(),
     )
     t3 = create_task(
         name="hello",
@@ -89,10 +89,12 @@ def test_task_takes_max_density_of_dependents_and_self() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
-        creation_time=datetime.now(),
     )
 
-    t = make_prerequisite_of(t1, [t2, t3])
+    t = AddDependentTasks(
+        at_time=datetime.now(),
+        dependent_tasks=[t2, t3],
+    )(t1)
 
     assert t.is_prerequisite_for == (
         DependentTask.from_task(t2),
@@ -115,7 +117,6 @@ def test_task_takes_max_density_of_effective_density() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
-        creation_time=datetime.now(),
     )
     t2 = create_task(
         name="hello",
@@ -123,7 +124,6 @@ def test_task_takes_max_density_of_effective_density() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
-        creation_time=datetime.now(),
     )
     t3 = create_task(
         name="hello",
@@ -131,11 +131,16 @@ def test_task_takes_max_density_of_effective_density() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
-        creation_time=datetime.now(),
     )
 
-    t2 = make_prerequisite_of(t2, [t3])
-    t = make_prerequisite_of(t1, [t2])
+    t2 = AddDependentTasks(
+        at_time=datetime.now(),
+        dependent_tasks=[t3],
+    )(t2)
+    t = AddDependentTasks(
+        at_time=datetime.now(),
+        dependent_tasks=[t2],
+    )(t1)
 
     assert t.is_prerequisite_for == (DependentTask.from_task(t2),)
     assert t.effective_density == pytest.approx(1.8)
@@ -154,7 +159,6 @@ def test_task_cannot_depend_on_another_one_more_than_once() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
-        creation_time=datetime.now(),
     )
     t2 = create_task(
         name="hello",
@@ -162,11 +166,13 @@ def test_task_cannot_depend_on_another_one_more_than_once() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
-        creation_time=datetime.now(),
     )
 
-    t1 = make_prerequisite_of(t1, [t2])
-    t1 = make_prerequisite_of(t1, [t2])
+    add_dependent_task = AddDependentTasks(
+        at_time=datetime.now(),
+        dependent_tasks=[t2],
+    )
+    t1 = pipe(add_dependent_task, add_dependent_task)(t1)
 
     assert t1.is_prerequisite_for == (DependentTask.from_task(t2),)
     assert t1.effective_density == pytest.approx(1.7)
@@ -185,7 +191,6 @@ def test_removing_dependent_task_leads_to_correct_density() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
-        creation_time=datetime.now(),
     )
     t2 = create_task(
         name="hello",
@@ -193,11 +198,12 @@ def test_removing_dependent_task_leads_to_correct_density() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
-        creation_time=datetime.now(),
     )
 
-    t1 = make_prerequisite_of(t1, [t2])
-    t1 = remove_as_prequisite_of(t1, [t2])
+    t1 = pipe(
+        AddDependentTasks(at_time=datetime.now(), dependent_tasks=[t2]),
+        RemoveDependentTasks(at_time=datetime.now(), dependent_tasks=[t2]),
+    )(t1)
 
     assert t1.is_prerequisite_for == ()
     assert t1.effective_density == 1.0
@@ -216,7 +222,6 @@ def test_task_will_ignore_effective_density_of_inactive_tasks() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now(),
-        creation_time=datetime.now(),
     )
     t2 = create_task(
         name="hello",
@@ -224,10 +229,9 @@ def test_task_will_ignore_effective_density_of_inactive_tasks() -> None:
         time=5,
         task_type=TaskType.HOME,
         activation_time=datetime.now() + timedelta(days=1),
-        creation_time=datetime.now(),
     )
 
-    t = make_prerequisite_of(t1, [t2])
+    t = AddDependentTasks(at_time=datetime.now(), dependent_tasks=[t2])(t1)
 
     assert t.is_prerequisite_for == (DependentTask.from_task(t2),)
     assert t.effective_density == 1.0  # unchanged
