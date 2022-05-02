@@ -37,7 +37,7 @@ def create_task(
     return _calculate_density(partially_initialized)
 
 
-def make_prerequisite_of(task: Task, dependencies_to_add: List[Task]) -> Task:
+def make_prerequisite_of(task: Task, dependents_to_add: List[Task]) -> Task:
     """
     Make this task a prerequisite of another one
 
@@ -45,9 +45,9 @@ def make_prerequisite_of(task: Task, dependencies_to_add: List[Task]) -> Task:
     and its dependencie's densities
     """
     existing_dependency_ids = set(t.id for t in task.is_prerequisite_for)
-    new_dependencies_to_add = [
+    new_dependents_to_add = [
         DependentTask.from_task(t)
-        for t in dependencies_to_add
+        for t in dependents_to_add
         if t.id not in existing_dependency_ids
     ]
 
@@ -55,20 +55,20 @@ def make_prerequisite_of(task: Task, dependencies_to_add: List[Task]) -> Task:
         task,
         is_prerequisite_for=(
             *task.is_prerequisite_for,
-            *new_dependencies_to_add,
+            *new_dependents_to_add,
         ),
     )
     return _calculate_density(result)
 
 
-def remove_as_prequisite_of(task: Task, dependencies_to_remove: List[Task]) -> Task:
+def remove_as_prequisite_of(task: Task, dependents_to_remove: List[Task]) -> Task:
     """
     Remove dependent tasks from a given task
 
     The task's effective_density will be recalculated as the maximum of its own
     and its dependencie's densities
     """
-    remove_ids = [t.id for t in dependencies_to_remove]
+    remove_ids = [t.id for t in dependents_to_remove]
     result = dc.replace(
         task,
         is_prerequisite_for=tuple(
