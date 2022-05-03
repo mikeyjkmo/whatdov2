@@ -1,7 +1,7 @@
 import dataclasses as dc
 import uuid
 from datetime import datetime
-from typing import List
+from typing import Any, List, Type
 
 from whatdo2.domain.task.typedefs import DependentTask, Task, TaskType
 from whatdo2.domain.utils import pipe
@@ -148,6 +148,90 @@ class RemoveDependentTasks(StateChange):
             ),
         )
         return result
+
+
+@dc.dataclass(frozen=True)
+class TaskModel(Task):
+    @classmethod
+    def new(
+        cls: Type["TaskModel"],
+        name: str,
+        importance: int,
+        time: int,
+        task_type: TaskType,
+        activation_time: datetime,
+        is_active: bool,
+    ) -> "TaskModel":
+        return cls(
+            id=uuid.uuid4(),
+            name=name,
+            importance=importance,
+            time=time,
+            task_type=task_type,
+            is_prerequisite_for=(),
+            activation_time=activation_time,
+            is_active=is_active,
+        ).ensure_valid_state()
+
+    def _replace(self, **params: Any) -> "TaskModel":
+        """
+        Create a new TaskModel with the parameters replaced
+        """
+        return dc.replace(
+            self,
+            **params
+        )
+
+    def ensure_valid_state(self) -> "TaskModel":
+        """
+        Given a task, return a new task with the calculated density
+        """
+        density = float(self.importance / self.time)
+        max_density_of_dependent_selfs = max(
+            [t.effective_density for t in self.is_prerequisite_for if t.is_active] + [0]
+        )
+
+        effective_density = density
+        if max_density_of_dependent_selfs >= density:
+            # If the density is smaller than the maximum of its dependent
+            # selfs, this self should take on the density of that maximum, plus
+            # a small margin -- this ensures that the self is more important
+            # than those that depend on it, as it needs to be done first.
+            effective_density = max_density_of_dependent_selfs + PRIORITY_DENSITY_MARGIN
+
+        return self._replace(
+            density=density,
+            effective_density=effective_density if self.is_active else 0,
+        )
+
+    def add_dependent_tasks(self, dependent_tasks: List["TaskModel"]) -> "TaskModel":
+        """
+        Add dependent tasks to the given task.
+        """
+        existing_dependency_ids = set(t.id for t in self.is_prerequisite_for)
+        new_dependents_to_add = [
+            DependentTask.from_task(t)
+            for t in dependent_tasks
+            if t.id not in existing_dependency_ids
+        ]
+
+        return self._replace(
+            is_prerequisite_for=(
+                *self.is_prerequisite_for,
+                *new_dependents_to_add,
+            ),
+        ).ensure_valid_state()
+
+    def remove_dependent_tasks(self, dependent_tasks: List["TaskModel"]) -> "TaskModel":
+        """
+        Remove dependent tasks from a given task
+        """
+        remove_ids = [t.id for t in dependent_tasks]
+        return self._replace(
+            is_prerequisite_for=tuple(
+                t for t in self.is_prerequisite_for if t.id not in remove_ids
+            ),
+        ).ensure_valid_state()
 
 
 __all__ = [

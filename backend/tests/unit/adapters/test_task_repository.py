@@ -8,9 +8,9 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from whatdo2.adapters.task_repository import MongoTaskRepository, TaskRepository
 from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
-from whatdo2.domain.task.core import AddDependentTasks, CreateTask, TaskType
+from whatdo2.domain.task.core import TaskModel, TaskType
 
-__pytestmark__ = ["db_unit_test"]
+pytestmark = pytest.mark.db_unit_test
 
 
 @pytest.fixture(name="repository")
@@ -40,33 +40,30 @@ async def test_save_and_get(
     request: Any,
 ) -> None:
     now = datetime.now().replace(microsecond=0)
-    create_task = CreateTask(current_time=now)
 
-    original_task = create_task(
-        name="hello",
-        importance=5,
-        time=5,
-        task_type=TaskType.HOME,
-        activation_time=now,
-    )
-    dep_task = create_task(
+    child = TaskModel.new(
         name="hello 2",
         importance=8,
         time=5,
         task_type=TaskType.HOME,
         activation_time=now,
+        is_active=True,
     )
-    new_task = AddDependentTasks(
-        current_time=now,
-        dependent_tasks=[dep_task],
-    )(original_task)
+    parent = TaskModel.new(
+        name="hello",
+        importance=5,
+        time=5,
+        task_type=TaskType.HOME,
+        activation_time=now,
+        is_active=True,
+    ).add_dependent_tasks([child])
 
-    await repository.save(dep_task)
-    await repository.save(new_task)
+    await repository.save(child)
+    await repository.save(parent)
 
     # Add cleanup for task
-    request.addfinalizer(_delete_task_finalizer(event_loop, repository, new_task.id))
-    request.addfinalizer(_delete_task_finalizer(event_loop, repository, dep_task.id))
+    request.addfinalizer(_delete_task_finalizer(event_loop, repository, parent.id))
+    request.addfinalizer(_delete_task_finalizer(event_loop, repository, child.id))
 
-    result = await repository.get(task_id=new_task.id)
-    assert result == new_task
+    result = await repository.get(task_id=parent.id)
+    assert result == parent

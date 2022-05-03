@@ -11,10 +11,10 @@ lint: format-check type-check
 	poetry run flake8 .
 
 test:
-	poetry run pytest tests -vvv -m "not db_unit_test"
+	poetry run pytest -vvv -m "not db_unit_test" tests
 
 test-watch:
-	poetry run ptw -- tests -vvv -m "not db_unit_test"
+	poetry run ptw -- -vvv -m "not db_unit_test" tests
 
 test-all:
 	poetry run pytest tests -vvv
