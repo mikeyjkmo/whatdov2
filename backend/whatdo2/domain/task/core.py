@@ -1,14 +1,32 @@
-import dataclasses as dc
 import uuid
+from dataclasses import replace as dc_replace
 from datetime import datetime
+from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Type
 
-from whatdo2.domain.task.typedefs import BaseTask, TaskType
+from pydantic.dataclasses import dataclass
+
+from whatdo2.domain.typedefs import Entity
 
 PRIORITY_DENSITY_MARGIN = 0.1
 
 
-@dc.dataclass(frozen=True)
+class TaskType(str, Enum):
+    HOME = "HOME"
+    WORK = "WORK"
+
+
+@dataclass(frozen=True)
+class BaseTask(Entity):
+    name: str
+    importance: int
+    task_type: TaskType
+    time: int
+    activation_time: datetime
+    is_active: bool
+
+
+@dataclass(frozen=True)
 class DependentTask(BaseTask):
     density: float
     effective_density: float
@@ -40,7 +58,7 @@ class DependentTask(BaseTask):
         return cls(**init_data)
 
 
-@dc.dataclass(frozen=True)
+@dataclass(frozen=True)
 class Task(BaseTask):
     density: Optional[float] = None
     effective_density: Optional[float] = None
@@ -71,7 +89,7 @@ class Task(BaseTask):
         """
         Create a new Task with the parameters replaced
         """
-        return dc.replace(self, **params)
+        return dc_replace(self, **params)
 
     @classmethod
     def from_raw(
