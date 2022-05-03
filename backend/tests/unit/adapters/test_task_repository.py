@@ -8,7 +8,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from whatdo2.adapters.task_repository import MongoTaskRepository, TaskRepository
 from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
-from whatdo2.domain.task.core import TaskModel, TaskType
+from whatdo2.domain.task.core import Task, TaskType
 
 pytestmark = pytest.mark.db_unit_test
 
@@ -41,7 +41,7 @@ async def test_save_and_get(
 ) -> None:
     now = datetime.now().replace(microsecond=0)
 
-    child = TaskModel.new(
+    child = Task.new(
         name="hello 2",
         importance=8,
         time=5,
@@ -49,7 +49,7 @@ async def test_save_and_get(
         activation_time=now,
         is_active=True,
     )
-    parent = TaskModel.new(
+    parent = Task.new(
         name="hello",
         importance=5,
         time=5,

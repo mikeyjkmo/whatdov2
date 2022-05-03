@@ -5,8 +5,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from whatdo2.adapters.task_repository import MongoTaskRepository
 from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
-from whatdo2.domain.task import core
-from whatdo2.domain.task.typedefs import Task, TaskType
+from whatdo2.domain.task.core import Task, TaskType
 
 
 class TaskService:
@@ -24,13 +23,13 @@ class TaskService:
         task_type: TaskType,
         activation_time: datetime,
     ) -> Task:
-        create_task = core.CreateTask(current_time=self._get_current_time())
-        new_task = create_task(
+        new_task = Task.new(
             name=name,
             importance=importance,
             time=time,
             task_type=task_type,
             activation_time=activation_time,
+            is_active=True,
         )
         await self._repository.save(new_task)
         return new_task
@@ -39,12 +38,6 @@ class TaskService:
         t1 = await self._repository.get(task_id=task_id)
         t2 = await self._repository.get(task_id=dependent_task_id)
 
-        add_dependent_tasks = core.AddDependentTasks(
-            current_time=self._get_current_time(),
-            dependent_tasks=[t2],
-        )
-
-        result = add_dependent_tasks(t1)
+        result = t1.add_dependent_tasks([t2])
         await self._repository.save(result)
-
         return result

@@ -2,14 +2,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from whatdo2.domain.task.core import (
-    CreateTask,
-    TaskType,
-    TaskModel,
-)
-from whatdo2.domain.task.typedefs import DependentTask
-
-create_task = CreateTask(current_time=datetime.now() + timedelta(days=1))
+from whatdo2.domain.task.core import DependentTask, Task, TaskType
 
 
 @pytest.mark.parametrize(
@@ -43,7 +36,7 @@ def test_created_task_has_correct_density(
     Then we should get a task with the expected density and effective density,
       which will be the same.
     """
-    t1 = TaskModel.new(
+    t1 = Task.new(
         name="hello",
         importance=importance,
         time=time,
@@ -68,7 +61,7 @@ def test_task_takes_max_density_of_dependents_and_self() -> None:
     then there will be a margin of 0.1 added to it, to ensure that
     the task is higher priority than those that depend on it.
     """
-    dependent_1 = TaskModel.new(
+    dependent_1 = Task.new(
         name="hello",
         importance=8,
         time=5,
@@ -76,7 +69,7 @@ def test_task_takes_max_density_of_dependents_and_self() -> None:
         activation_time=datetime.now(),
         is_active=True,
     )
-    dependent_2 = TaskModel.new(
+    dependent_2 = Task.new(
         name="hello",
         importance=4,
         time=5,
@@ -85,7 +78,7 @@ def test_task_takes_max_density_of_dependents_and_self() -> None:
         is_active=True,
     )
 
-    t = TaskModel.new(
+    t = Task.new(
         name="hello",
         importance=5,
         time=5,
@@ -109,7 +102,7 @@ def test_task_takes_max_density_of_effective_density() -> None:
     Then the task's effective_density should be the maximum of its own and the other's
       effective density
     """
-    child2 = TaskModel.new(
+    child2 = Task.new(
         name="hello",
         importance=8,
         time=5,
@@ -118,7 +111,7 @@ def test_task_takes_max_density_of_effective_density() -> None:
         is_active=True,
     )
 
-    child1 = TaskModel.new(
+    child1 = Task.new(
         name="hello",
         importance=4,
         time=5,
@@ -127,7 +120,7 @@ def test_task_takes_max_density_of_effective_density() -> None:
         is_active=True,
     ).add_dependent_tasks([child2])
 
-    root = TaskModel.new(
+    root = Task.new(
         name="hello",
         importance=5,
         time=5,
@@ -147,7 +140,7 @@ def test_task_cannot_depend_on_another_one_more_than_once() -> None:
     When we make it a prerequisite of the same dependency
     Then dependents for the task will not change
     """
-    child = TaskModel.new(
+    child = Task.new(
         name="hello",
         importance=8,
         time=5,
@@ -155,7 +148,7 @@ def test_task_cannot_depend_on_another_one_more_than_once() -> None:
         activation_time=datetime.now(),
         is_active=True,
     )
-    parent = TaskModel.new(
+    parent = Task.new(
         name="hello",
         importance=5,
         time=5,
@@ -177,7 +170,7 @@ def test_removing_dependent_task_leads_to_correct_density() -> None:
     When we remove the dependency
     Then the task's density should be recalculated correctly
     """
-    child = TaskModel.new(
+    child = Task.new(
         name="hello",
         importance=8,
         time=5,
@@ -185,7 +178,7 @@ def test_removing_dependent_task_leads_to_correct_density() -> None:
         activation_time=datetime.now(),
         is_active=True,
     )
-    parent = TaskModel.new(
+    parent = Task.new(
         name="hello",
         importance=5,
         time=5,
@@ -207,7 +200,7 @@ def test_task_will_ignore_effective_density_of_inactive_tasks() -> None:
     When we make the denser one dependent on the other
     The density of the other will not change
     """
-    inactive_child = TaskModel.new(
+    inactive_child = Task.new(
         name="hello",
         importance=8,
         time=5,
@@ -215,7 +208,7 @@ def test_task_will_ignore_effective_density_of_inactive_tasks() -> None:
         activation_time=datetime.now() + timedelta(days=1),
         is_active=False,
     )
-    parent = TaskModel.new(
+    parent = Task.new(
         name="hello",
         importance=5,
         time=5,
@@ -232,7 +225,7 @@ def test_task_will_ignore_effective_density_of_inactive_tasks() -> None:
 
 
 def test_task_will_have_effective_density_of_zero_if_it_is_inactive() -> None:
-    inactive_task = TaskModel.new(
+    inactive_task = Task.new(
         name="hello",
         importance=5,
         time=5,
