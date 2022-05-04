@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type
 
 from pydantic.dataclasses import dataclass
 
+from whatdo2.domain.task.events import TaskActivated, TaskDeactivated, TaskEvent
 from whatdo2.domain.typedefs import Entity
 
 PRIORITY_DENSITY_MARGIN = 0.1
@@ -63,6 +64,7 @@ class Task(BaseTask):
     density: Optional[float] = None
     effective_density: Optional[float] = None
     is_prerequisite_for: Tuple[DependentTask, ...] = ()
+    events: Tuple[TaskEvent, ...] = ()
 
     @classmethod
     def new(
@@ -154,15 +156,33 @@ class Task(BaseTask):
             ),
         ).ensure_valid_state()
 
+    def _determine_activation_events(
+        self, original_is_active: bool, new_is_active: bool
+    ) -> List[TaskEvent]:
+        if original_is_active != new_is_active:
+            if new_is_active:
+                return [TaskActivated(self.id)]
+            else:
+                return [TaskDeactivated(self.id)]
+        return []
+
     def update_is_active(self, current_time: datetime) -> "Task":
         """
         Update the is_active state of a Task based on the current_time
         """
+        original_is_active = self.is_active
+        new_is_active = bool(
+            current_time.replace(tzinfo=None)
+            >= self.activation_time.replace(tzinfo=None)
+        )
+        new_events = self._determine_activation_events(
+            original_is_active,
+            new_is_active,
+        )
+
         return self._replace(
-            is_active=bool(
-                current_time.replace(tzinfo=None)
-                >= self.activation_time.replace(tzinfo=None)
-            )
+            is_active=new_is_active,
+            events=(*self.events, *new_events),
         ).ensure_valid_state()
 
 
