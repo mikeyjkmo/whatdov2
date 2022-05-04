@@ -234,3 +234,31 @@ def test_task_will_have_effective_density_of_zero_if_it_is_inactive() -> None:
         is_active=False,
     )
     assert inactive_task.effective_density == 0
+
+
+class TestUpdateIsActive:
+    def test_future_activation_time_leads_to_inactive_state(self) -> None:
+        inactive_task = Task.new(
+            name="hello",
+            importance=5,
+            time=5,
+            task_type=TaskType.HOME,
+            activation_time=datetime.now() + timedelta(days=1),
+            is_active=False,
+        ).update_is_active(datetime.now())
+
+        assert not inactive_task.is_active
+        assert inactive_task.effective_density == 0
+
+    def test_past_activation_time_leads_to_active_state(self) -> None:
+        inactive_task = Task.new(
+            name="hello",
+            importance=5,
+            time=5,
+            task_type=TaskType.HOME,
+            activation_time=datetime.now() - timedelta(days=1),
+            is_active=False,
+        ).update_is_active(datetime.now())
+
+        assert inactive_task.is_active
+        assert inactive_task.effective_density == 1.0

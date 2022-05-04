@@ -154,6 +154,17 @@ class Task(BaseTask):
             ),
         ).ensure_valid_state()
 
+    def update_is_active(self, current_time: datetime) -> "Task":
+        """
+        Update the is_active state of a Task based on the current_time
+        """
+        return self._replace(
+            is_active=bool(
+                current_time.replace(tzinfo=None)
+                >= self.activation_time.replace(tzinfo=None)
+            )
+        ).ensure_valid_state()
+
 
 __all__ = [
     "TaskType",

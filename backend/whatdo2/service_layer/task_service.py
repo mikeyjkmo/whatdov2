@@ -30,7 +30,7 @@ class TaskService:
             task_type=task_type,
             activation_time=activation_time,
             is_active=True,
-        )
+        ).update_is_active(current_time=datetime.utcnow())
         await self._repository.save(new_task)
         return new_task
 
