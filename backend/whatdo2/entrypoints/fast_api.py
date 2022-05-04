@@ -9,11 +9,11 @@ from pydantic.main import BaseModel
 
 from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
 from whatdo2.domain.task.core import TaskType
-from whatdo2.service_layer.task_service import TaskService
+from whatdo2.service_layer.task_command_service import TaskCommandService
 
 app = FastAPI()
 db = AsyncIOMotorClient(MONGO_CONNECTION_STR)[MONGO_DB_NAME]
-service = TaskService()
+service = TaskCommandService()
 
 
 class TaskCreationPayload(BaseModel):

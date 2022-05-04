@@ -8,7 +8,7 @@ from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
 from whatdo2.domain.task.core import Task, TaskType
 
 
-class TaskService:
+class TaskCommandService:
     def __init__(self) -> None:
         self._get_current_time = datetime.utcnow
         self._repository = MongoTaskRepository(
