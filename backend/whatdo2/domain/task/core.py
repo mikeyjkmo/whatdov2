@@ -110,17 +110,17 @@ class Task(BaseTask):
         Given a task, return a new task with the calculated density
         """
         density = float(self.importance / self.time)
-        max_density_of_dependent_selfs = max(
+        max_density_of_dependent_tasks = max(
             [t.effective_density for t in self.is_prerequisite_for if t.is_active] + [0]
         )
 
         effective_density = density
-        if max_density_of_dependent_selfs >= density:
+        if max_density_of_dependent_tasks >= density:
             # If the density is smaller than the maximum of its dependent
-            # selfs, this self should take on the density of that maximum, plus
+            # tasks, this self should take on the density of that maximum, plus
             # a small margin -- this ensures that the self is more important
             # than those that depend on it, as it needs to be done first.
-            effective_density = max_density_of_dependent_selfs + PRIORITY_DENSITY_MARGIN
+            effective_density = max_density_of_dependent_tasks + PRIORITY_DENSITY_MARGIN
 
         return self._replace(
             density=density,
