@@ -10,5 +10,5 @@ Features supported:
 
 ## Architecture
 
-WhatDo is inspired by "Clean Architecture" -- however, its pure domain model is
-immutable and composed of pure functions.
+WhatDo is inspired by "Clean Architecture" -- however, its domain model is pure and
+immutable.
