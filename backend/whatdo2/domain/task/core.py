@@ -170,13 +170,12 @@ class Task(BaseTask):
         """
         Update the is_active state of a Task based on the current_time
         """
-        original_is_active = self.is_active
         new_is_active = bool(
             current_time.replace(tzinfo=None)
             >= self.activation_time.replace(tzinfo=None)
         )
         new_events = self._determine_activation_events(
-            original_is_active,
+            self.is_active,
             new_is_active,
         )
 
