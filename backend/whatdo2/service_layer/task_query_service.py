@@ -1,12 +1,12 @@
 from datetime import datetime
 from typing import List
 from uuid import UUID
-from whatdo2.domain.task.core import TaskType
 
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel
 
 from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
+from whatdo2.domain.task.core import TaskType
 
 
 class DependentTaskDTO(BaseModel):

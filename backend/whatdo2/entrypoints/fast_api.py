@@ -1,8 +1,6 @@
-import dataclasses as dc
 from datetime import datetime
 from typing import List
 from uuid import UUID
-from whatdo2.service_layer.task_query_service import TaskDTO, TaskQueryService
 
 from fastapi import FastAPI
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -11,6 +9,7 @@ from pydantic.main import BaseModel
 from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
 from whatdo2.domain.task.core import TaskType
 from whatdo2.service_layer.task_command_service import TaskCommandService
+from whatdo2.service_layer.task_query_service import TaskDTO, TaskQueryService
 
 app = FastAPI()
 db = AsyncIOMotorClient(MONGO_CONNECTION_STR)[MONGO_DB_NAME]
@@ -52,7 +51,7 @@ async def create_task(task: TaskCreationPayload) -> TaskResponse:
         task_type=task.task_type,
         activation_time=task.activation_time,
     )
-    return TaskResponse(task=TaskDTO.parse_obj(dc.asdict(result)))
+    return TaskResponse(task=TaskDTO.parse_obj(result.to_raw()))
 
 
 @app.post("/task/{task_id}/dependent_tasks")
@@ -64,4 +63,4 @@ async def add_dependent_task(
         task_id=task_id,
         dependent_task_id=dependent_task.id,
     )
-    return TaskResponse(task=TaskDTO.parse_obj(dc.asdict(result)))
+    return TaskResponse(task=TaskDTO.parse_obj(result.to_raw()))

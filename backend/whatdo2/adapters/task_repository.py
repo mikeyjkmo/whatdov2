@@ -1,4 +1,3 @@
-import dataclasses as dc
 from abc import ABCMeta
 from uuid import UUID
 
@@ -26,7 +25,7 @@ class MongoTaskRepository(TaskRepository):
         self.db = db
 
     async def save(self, task: Task) -> None:
-        raw_task = dc.asdict(task)
+        raw_task = task.to_raw()
         raw_task["id"] = str(task.id)
         raw_task["is_prerequisite_for"] = [
             {"id": str(t.id)} for t in task.is_prerequisite_for

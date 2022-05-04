@@ -1,9 +1,11 @@
 import dataclasses as dc
 from uuid import UUID
 
+from whatdo2.domain.typedefs import DomainEvent
+
 
 @dc.dataclass(frozen=True)
-class TaskEvent:
+class TaskEvent(DomainEvent):
     pass
 
 
