@@ -159,12 +159,17 @@ class Task(BaseTask):
     def _determine_activation_events(
         self, original_is_active: bool, new_is_active: bool
     ) -> List[TaskEvent]:
-        if original_is_active != new_is_active:
-            if new_is_active:
-                return [TaskActivated(self.id)]
-            else:
-                return [TaskDeactivated(self.id)]
-        return []
+        """
+        Given the original and new is_active states, determine the domain
+        events that have happened.
+        """
+        if original_is_active == new_is_active:
+            return []
+
+        if new_is_active:
+            return [TaskActivated(self.id)]
+
+        return [TaskDeactivated(self.id)]
 
     def update_is_active(self, current_time: datetime) -> "Task":
         """
