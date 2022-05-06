@@ -1,6 +1,6 @@
 import asyncio
-from datetime import datetime
 import logging
+from datetime import datetime
 from typing import List
 from uuid import UUID
 
@@ -10,9 +10,9 @@ from pydantic.main import BaseModel
 
 from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
 from whatdo2.domain.task.core import TaskType
+from whatdo2.logging import set_up_logging
 from whatdo2.service_layer.task_command_service import TaskCommandService
 from whatdo2.service_layer.task_query_service import TaskDTO, TaskQueryService
-from whatdo2.logging import set_up_logging
 
 set_up_logging()
 app = FastAPI()
@@ -77,6 +77,7 @@ async def run_activate_ready_task_loop() -> None:
     """
     Main background task loop
     """
+
     async def _activate_ready_tasks() -> None:
         logger.debug("Activating inactive ready tasks")
         await command_service.activate_ready_tasks()

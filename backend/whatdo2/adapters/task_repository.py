@@ -58,9 +58,24 @@ class MongoTaskRepository(TaskRepository):
         await self._collection.delete_one({"id": str(task_id)})
 
     async def list_inactive_with_past_activation_times(self) -> List[Task]:
-        raw_results = await self.db[self._collection_name].find(
+        raw_results = await self._collection.find(
             {"activation_time": {"$lte": datetime.utcnow()}, "is_active": False},
         ).to_list(length=None)
+
+        results = []
+
+        for raw_task in raw_results:
+            raw_dependencies = await self._collection.find(
+                {"id": {"$in": [t["id"] for t in raw_task["is_prerequisite_for"]]}},
+            ).to_list(length=None)
+            results.append(Task.from_raw(raw_task, raw_dependencies))
+
+        return results
+
+    async def list_prerequisites_for_task(self, task_id: UUID) -> List[Task]:
+        raw_results = await self._collection.find(
+            {"is_prerequisite_for": {"$elemMatch": {"id": str(task_id)}}},
+        )
 
         results = []
 

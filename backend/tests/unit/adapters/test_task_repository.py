@@ -17,7 +17,7 @@ pytestmark = pytest.mark.db_unit_test
 def mongo_repository() -> MongoTaskRepository:
     return MongoTaskRepository(
         db=AsyncIOMotorClient(MONGO_CONNECTION_STR)[MONGO_DB_NAME],
-        collection_name="tasks_test"
+        collection_name="tasks_test",
     )
 
 
