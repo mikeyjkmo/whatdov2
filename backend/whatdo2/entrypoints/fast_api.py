@@ -10,6 +10,8 @@ from pydantic.main import BaseModel
 
 from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
 from whatdo2.domain.task.core import TaskType
+from whatdo2.domain.task.events import TaskActivated, TaskDeactivated, TaskEvent
+from whatdo2.service_layer.eventbus import EventBus
 from whatdo2.service_layer.task_command_service import TaskCommandService
 from whatdo2.service_layer.task_query_service import TaskDTO, TaskQueryService
 
@@ -17,6 +19,7 @@ app = FastAPI()
 db = AsyncIOMotorClient(MONGO_CONNECTION_STR)[MONGO_DB_NAME]
 command_service = TaskCommandService()
 query_service = TaskQueryService()
+eventbus = EventBus()
 
 ACTIVATION_BACKGROUND_TASK = None
 logger = logging.getLogger(__name__)
@@ -87,6 +90,15 @@ async def run_activate_ready_task_loop() -> None:
             logger.exception("An error occurred during background task:")
 
         await asyncio.sleep(10)
+
+
+@app.on_event("startup")
+async def register_event_handlers() -> None:
+    async def _handle(event: TaskEvent) -> None:
+        await command_service.update_is_active_for_prerequisite_tasks(event.task_id)
+
+    eventbus.register(TaskActivated, _handle)
+    eventbus.register(TaskDeactivated, _handle)
 
 
 @app.on_event("startup")
