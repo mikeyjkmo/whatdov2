@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import List
 from uuid import UUID
+import logging
 
 from motor.motor_asyncio import AsyncIOMotorClient
 
@@ -9,6 +10,8 @@ from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
 from whatdo2.domain.task.core import Task, TaskType
 from whatdo2.domain.task.events import TaskActivated, TaskDeactivated, TaskEvent
 from whatdo2.utils import flatten
+
+logger = logging.getLogger(__name__)
 
 
 class TaskCommandService:
@@ -21,9 +24,31 @@ class TaskCommandService:
     async def _dispatch(self, *events: TaskEvent) -> None:
         for event in events:
             if isinstance(event, TaskActivated) or isinstance(event, TaskDeactivated):
-                # list tasks that are dependencies for this task,
-                # then update their statuses
-                pass
+                logger.debug(
+                    "Task %s has been activated or deactivated. Updating "
+                    "prerequisite tasks",
+                    event.task_id,
+                )
+                await self.update_is_active_for_prerequisite_tasks(event.task_id)
+
+    async def update_is_active_for_prerequisite_tasks(self, task_id: UUID) -> None:
+        tasks = await self._repository.list_prerequisites_for_task(
+            task_id,
+        )
+        await self._multiple_update_is_active(tasks)
+
+    async def _multiple_update_is_active(self, tasks: List[Task]) -> None:
+        logger.debug(
+            "Calling update_is_active on the following tasks: %s",
+            [t.id for t in tasks],
+        )
+        tasks = [t.update_is_active(datetime.utcnow()) for t in tasks]
+        events: List[TaskEvent] = flatten([t.events for t in tasks])
+
+        for task in tasks:
+            await self._repository.save(task)
+
+        await self._dispatch(*events)
 
     async def create_task(
         self,
@@ -54,10 +79,4 @@ class TaskCommandService:
 
     async def activate_ready_tasks(self) -> None:
         tasks = await self._repository.list_inactive_with_past_activation_times()
-        tasks = [t.update_is_active(datetime.utcnow()) for t in tasks]
-        events: List[TaskEvent] = flatten([t.events for t in tasks])
-
-        for task in tasks:
-            await self._repository.save(task)
-
-        await self._dispatch(*events)
+        await self._multiple_update_is_active(tasks)

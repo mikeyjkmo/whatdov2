@@ -21,6 +21,9 @@ class TaskRepository(metaclass=ABCMeta):
     async def list_inactive_with_past_activation_times(self) -> List[Task]:
         ...
 
+    async def list_prerequisites_for_task(self, task_id: UUID) -> List[Task]:
+        ...
+
 
 class MongoTaskRepository(TaskRepository):
     def __init__(
@@ -75,7 +78,7 @@ class MongoTaskRepository(TaskRepository):
     async def list_prerequisites_for_task(self, task_id: UUID) -> List[Task]:
         raw_results = await self._collection.find(
             {"is_prerequisite_for": {"$elemMatch": {"id": str(task_id)}}},
-        )
+        ).to_list(length=None)
 
         results = []
 

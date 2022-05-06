@@ -116,3 +116,45 @@ async def test_list_inactive_with_past_activation_time(
     result = await repository.list_inactive_with_past_activation_times()
 
     assert result == [task]
+
+
+@pytest.mark.asyncio
+async def test_list_prerequisites_for_task(
+    event_loop: asyncio.BaseEventLoop,
+    repository: TaskRepository,
+    request: Any,
+) -> None:
+    """
+    Given that I have a parent and child task
+    When I call list_prerequisites_for_task on the child task
+    Then I should get the parent task back
+    """
+    past = datetime.now().replace(microsecond=0) - timedelta(days=1)
+
+    child = Task.new(
+        name="hello 2",
+        importance=8,
+        time=5,
+        task_type=TaskType.HOME,
+        activation_time=past,
+        is_active=True,
+    )
+    task = Task.new(
+        name="TEST PAST ACTIVATION TIME INACTIVE TASK",
+        importance=8,
+        time=5,
+        task_type=TaskType.HOME,
+        activation_time=past,
+        is_active=True,
+    ).add_dependent_tasks([child])
+
+    await repository.save(child)
+    await repository.save(task)
+
+    # Add cleanup for task
+    request.addfinalizer(_delete_task_finalizer(event_loop, repository, task.id))
+    request.addfinalizer(_delete_task_finalizer(event_loop, repository, child.id))
+
+    result = await repository.list_prerequisites_for_task(child.id)
+
+    assert result == [task]
