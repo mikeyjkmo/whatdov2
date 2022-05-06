@@ -1,7 +1,7 @@
+import logging
 from datetime import datetime
 from typing import List
 from uuid import UUID
-import logging
 
 from motor.motor_asyncio import AsyncIOMotorClient
 
