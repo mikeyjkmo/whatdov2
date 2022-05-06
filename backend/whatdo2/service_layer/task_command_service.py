@@ -41,3 +41,9 @@ class TaskCommandService:
         result = t1.add_dependent_tasks([t2])
         await self._repository.save(result)
         return result
+
+    async def activate_ready_tasks(self) -> None:
+        tasks = await self._repository.list_inactive_with_past_activation_times()
+        tasks = [t.update_is_active(datetime.utcnow()) for t in tasks]
+        for task in tasks:
+            await self._repository.save(task)
