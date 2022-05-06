@@ -4,7 +4,6 @@ from typing import Any, Awaitable, Callable, Dict, List, Type, TypeVar
 from whatdo2.domain.typedefs import DomainEvent
 
 T = TypeVar("T", bound=DomainEvent)
-EventHandler = Callable[[DomainEvent], Awaitable]
 
 
 class EventBus:
