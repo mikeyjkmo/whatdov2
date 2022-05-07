@@ -54,8 +54,8 @@ class DependentTask(BaseTask):
     @classmethod
     def from_raw(cls: Type["DependentTask"], data: Dict[Any, Any]) -> "DependentTask":
         init_data = data.copy()
-        del init_data["_id"]
-        del init_data["is_prerequisite_for"]
+        init_data.pop("_id", None)
+        init_data.pop("is_prerequisite_for", None)
         return cls(**init_data)
 
 
@@ -102,7 +102,7 @@ class Task(BaseTask):
         raw_task["is_prerequisite_for"] = tuple(
             DependentTask.from_raw(t) for t in raw_dependencies
         )
-        del raw_task["_id"]
+        raw_task.pop("_id", None)
         return cls(**raw_task)
 
     def ensure_valid_state(self) -> "Task":
