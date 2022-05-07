@@ -1,24 +1,27 @@
 import asyncio
+import pytest_asyncio
 from datetime import datetime, timedelta
 from typing import Any, Callable
 from uuid import UUID
 
 import pytest
-from motor.motor_asyncio import AsyncIOMotorClient
+from whatdo2.adapters.sql_task_repository import SQLTaskRepository
+from whatdo2.adapters.orm import _create_tables
 
-from whatdo2.adapters.task_repository import MongoTaskRepository, TaskRepository
-from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
+from whatdo2.adapters.task_repository import TaskRepository
 from whatdo2.domain.task.core import Task, TaskType
 
 pytestmark = pytest.mark.db_unit_test
 
 
+@pytest_asyncio.fixture(name="create_tables", autouse=True)
+async def create_tables_fixture() -> None:
+    await _create_tables()
+
+
 @pytest.fixture(name="repository")
-def mongo_repository() -> MongoTaskRepository:
-    return MongoTaskRepository(
-        db=AsyncIOMotorClient(MONGO_CONNECTION_STR)[MONGO_DB_NAME],
-        collection_name="tasks_test",
-    )
+def repository_fixture() -> TaskRepository:
+    return SQLTaskRepository()
 
 
 def _delete_task_finalizer(
