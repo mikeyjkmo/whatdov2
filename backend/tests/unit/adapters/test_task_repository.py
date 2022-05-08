@@ -6,7 +6,7 @@ from uuid import UUID
 
 import pytest
 from whatdo2.adapters.sql_task_repository import SQLTaskRepository
-from whatdo2.adapters.orm import _create_tables
+from whatdo2.adapters.orm import delete_and_create_tables
 
 from whatdo2.adapters.task_repository import TaskRepository
 from whatdo2.domain.task.core import Task, TaskType
@@ -16,7 +16,7 @@ pytestmark = pytest.mark.db_unit_test
 
 @pytest_asyncio.fixture(name="create_tables", autouse=True)
 async def create_tables_fixture() -> None:
-    await _create_tables()
+    await delete_and_create_tables()
 
 
 @pytest.fixture(name="repository")
