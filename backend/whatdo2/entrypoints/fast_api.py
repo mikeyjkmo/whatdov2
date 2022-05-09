@@ -5,10 +5,8 @@ from typing import List
 from uuid import UUID
 
 from fastapi import FastAPI
-from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic.main import BaseModel
 
-from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
 from whatdo2.domain.task.core import TaskType
 from whatdo2.domain.task.events import TaskActivated, TaskDeactivated, TaskEvent
 from whatdo2.service_layer.eventbus import EventBus
@@ -17,7 +15,6 @@ from whatdo2.service_layer.task_query_service import TaskDTO, TaskQueryService
 from whatdo2.service_layer.unit_of_work import new_uow
 
 app = FastAPI()
-db = AsyncIOMotorClient(MONGO_CONNECTION_STR)[MONGO_DB_NAME]
 eventbus = EventBus()
 command_service = TaskCommandService(uow_factory=lambda: new_uow(eventbus))
 query_service = TaskQueryService()

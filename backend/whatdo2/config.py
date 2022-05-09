@@ -4,9 +4,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MONGO_CONNECTION_STR = os.getenv("MONGO_CONNECTION_STR")
-MONGO_DB_NAME = "whatdo2"
-
 POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
 POSTGRES_USER = os.getenv("POSTGRES_USER", "whatdo2")
 POSTGRES_DB = os.getenv("POSTGRES_DB", "whatdo2")
