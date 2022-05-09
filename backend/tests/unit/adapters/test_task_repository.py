@@ -9,6 +9,7 @@ import pytest_asyncio
 from whatdo2.adapters.orm import delete_and_create_tables
 from whatdo2.adapters.task_repository import TaskRepository
 from whatdo2.domain.task.core import Task, TaskType
+from whatdo2.service_layer.eventbus import EventBus
 from whatdo2.service_layer.unit_of_work import new_uow
 
 pytestmark = pytest.mark.db_unit_test
@@ -21,7 +22,8 @@ async def create_tables_fixture() -> None:
 
 @pytest_asyncio.fixture(name="repository")
 async def repository_fixture() -> AsyncGenerator[TaskRepository, None]:
-    async with new_uow() as uow:
+    eventbus = EventBus()
+    async with new_uow(eventbus) as uow:
         yield uow.task_repository
 
 

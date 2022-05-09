@@ -1,33 +1,24 @@
 import logging
 from datetime import datetime
-from typing import List
+from typing import AsyncContextManager, Callable, List
 from uuid import UUID
 
 from whatdo2.domain.task.core import Task, TaskType
-from whatdo2.domain.task.events import TaskActivated, TaskDeactivated, TaskEvent
-from whatdo2.service_layer.unit_of_work import UnitOfWork, new_uow
+from whatdo2.domain.task.events import TaskEvent
+from whatdo2.service_layer.unit_of_work import UnitOfWork
 from whatdo2.utils import flatten
 
 logger = logging.getLogger(__name__)
 
 
 class TaskCommandService:
-    def __init__(self) -> None:
-        self._get_current_time = datetime.utcnow
-
-    async def _dispatch(self, *events: TaskEvent) -> None:
-        # TODO: Change to using eventbus
-        for event in events:
-            if isinstance(event, TaskActivated) or isinstance(event, TaskDeactivated):
-                logger.debug(
-                    "Task %s has been activated or deactivated. Updating "
-                    "prerequisite tasks",
-                    event.task_id,
-                )
-                await self.update_is_active_for_prerequisite_tasks(event.task_id)
+    def __init__(
+        self, uow_factory: Callable[[], AsyncContextManager[UnitOfWork]]
+    ) -> None:
+        self._uow_factory = uow_factory
 
     async def update_is_active_for_prerequisite_tasks(self, task_id: UUID) -> None:
-        async with new_uow() as uow:
+        async with self._uow_factory() as uow:
             tasks = await uow.task_repository.list_prerequisites_for_task(
                 task_id,
             )
@@ -46,7 +37,7 @@ class TaskCommandService:
         for task in tasks:
             await uow.task_repository.save(task)
 
-        await self._dispatch(*events)
+        uow.push_events(*events)
 
     async def create_task(
         self,
@@ -56,7 +47,7 @@ class TaskCommandService:
         task_type: TaskType,
         activation_time: datetime,
     ) -> Task:
-        async with new_uow() as uow:
+        async with self._uow_factory() as uow:
             new_task = Task.new(
                 name=name,
                 importance=importance,
@@ -69,7 +60,7 @@ class TaskCommandService:
             return new_task
 
     async def add_dependent_task(self, task_id: UUID, dependent_task_id: UUID) -> Task:
-        async with new_uow() as uow:
+        async with self._uow_factory() as uow:
             t1 = await uow.task_repository.get(task_id=task_id)
             t2 = await uow.task_repository.get(task_id=dependent_task_id)
 
@@ -78,6 +69,6 @@ class TaskCommandService:
             return result
 
     async def activate_ready_tasks(self) -> None:
-        async with new_uow() as uow:
+        async with self._uow_factory() as uow:
             tasks = await uow.task_repository.list_inactive_with_past_activation_times()
             await self._multiple_update_is_active(uow, tasks)

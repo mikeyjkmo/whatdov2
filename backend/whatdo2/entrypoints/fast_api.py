@@ -14,12 +14,13 @@ from whatdo2.domain.task.events import TaskActivated, TaskDeactivated, TaskEvent
 from whatdo2.service_layer.eventbus import EventBus
 from whatdo2.service_layer.task_command_service import TaskCommandService
 from whatdo2.service_layer.task_query_service import TaskDTO, TaskQueryService
+from whatdo2.service_layer.unit_of_work import new_uow
 
 app = FastAPI()
 db = AsyncIOMotorClient(MONGO_CONNECTION_STR)[MONGO_DB_NAME]
-command_service = TaskCommandService()
-query_service = TaskQueryService()
 eventbus = EventBus()
+command_service = TaskCommandService(uow_factory=lambda: new_uow(eventbus))
+query_service = TaskQueryService()
 
 ACTIVATION_BACKGROUND_TASK = None
 logger = logging.getLogger(__name__)
