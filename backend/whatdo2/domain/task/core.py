@@ -1,5 +1,5 @@
 import uuid
-from dataclasses import replace as dc_replace
+from dataclasses import replace as dc_replace, fields as dc_fields
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Type
@@ -104,6 +104,24 @@ class Task(BaseTask):
         )
         raw_task.pop("_id", None)
         return cls(**raw_task)
+
+    @classmethod
+    def from_orm(cls, orm: Any) -> "Task":
+        fields = dc_fields(cls)
+        constr_dict = {
+            field.name: getattr(orm, field.name)
+            for field in fields
+            if hasattr(orm, field.name) and field.name != "is_prerequisite_for"
+        }
+
+        constr_dict["is_prerequisite_for"] = [
+            DependentTask.from_orm(o) for o in getattr(
+                orm,
+                "is_prerequisite_for",
+                (),
+            )
+        ]
+        return cls(**constr_dict)
 
     def ensure_valid_state(self) -> "Task":
         """

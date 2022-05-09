@@ -1,19 +1,12 @@
 from typing import Any
 
-from sqlalchemy.ext.asyncio.engine import create_async_engine
-from whatdo2.config import POSTGRES_URI
-from sqlalchemy import (
-    Boolean,
-    Column,
-    DateTime,
-    ForeignKey,
-    Float,
-    Integer,
-    String,
-)
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.ext.asyncio.engine import create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+
+from whatdo2.config import POSTGRES_URI
 
 Base = declarative_base()
 

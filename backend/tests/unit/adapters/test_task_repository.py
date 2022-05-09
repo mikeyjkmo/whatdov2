@@ -1,13 +1,13 @@
 import asyncio
-import pytest_asyncio
 from datetime import datetime, timedelta
 from typing import Any, Callable
 from uuid import UUID
 
 import pytest
-from whatdo2.adapters.sql_task_repository import SQLTaskRepository
-from whatdo2.adapters.orm import delete_and_create_tables
+import pytest_asyncio
 
+from whatdo2.adapters.orm import delete_and_create_tables
+from whatdo2.adapters.sql_task_repository import SQLTaskRepository
 from whatdo2.adapters.task_repository import TaskRepository
 from whatdo2.domain.task.core import Task, TaskType
 

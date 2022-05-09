@@ -1,16 +1,15 @@
 from datetime import datetime
-from typing import Dict, Any, List, cast
+from typing import Any, Dict, List, cast
 from uuid import UUID
 
-from sqlalchemy.orm import selectinload
-from whatdo2.domain.task.core import Task
-
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 
-from whatdo2.adapters.task_repository import TaskRepository
 from whatdo2.adapters.orm import Association, TaskDBModel
+from whatdo2.adapters.task_repository import TaskRepository
 from whatdo2.config import POSTGRES_URI
+from whatdo2.domain.task.core import Task
 
 
 def db_model_to_dict(db_model: Any) -> Dict[Any, Any]:
@@ -43,11 +42,7 @@ class SQLTaskRepository(TaskRepository):
                 .options(selectinload(TaskDBModel.is_prerequisite_for))
             )
             db_task = result.scalar_one()
-            raw_task = db_model_to_dict(db_task)
-            raw_dependencies = tuple(
-                db_model_to_dict(t) for t in db_task.is_prerequisite_for
-            )
-            return Task.from_raw(raw_task, raw_dependencies)
+            return Task.from_orm(db_task)
 
     async def save(self, task: Task) -> None:
         async with AsyncSession(self._engine, expire_on_commit=False) as session:
@@ -79,17 +74,9 @@ class SQLTaskRepository(TaskRepository):
             )
 
             db_tasks = many_results.scalars().all()
-
-            result = []
-
-            for dbt in db_tasks:
-                raw_task = db_model_to_dict(dbt)
-                raw_dependencies = tuple(
-                    db_model_to_dict(t) for t in dbt.is_prerequisite_for
-                )
-                result.append(Task.from_raw(raw_task, raw_dependencies))
-
-            return result
+            return [
+                Task.from_orm(t) for t in db_tasks
+            ]
 
     async def list_prerequisites_for_task(self, task_id: UUID) -> List[Task]:
         async with AsyncSession(self._engine, expire_on_commit=False) as session:
@@ -101,14 +88,6 @@ class SQLTaskRepository(TaskRepository):
             )
 
             db_tasks = many_results.scalars().all()
-
-            result = []
-
-            for dbt in db_tasks:
-                raw_task = db_model_to_dict(dbt)
-                raw_dependencies = tuple(
-                    db_model_to_dict(t) for t in dbt.is_prerequisite_for
-                )
-                result.append(Task.from_raw(raw_task, raw_dependencies))
-
-            return result
+            return [
+                Task.from_orm(t) for t in db_tasks
+            ]
