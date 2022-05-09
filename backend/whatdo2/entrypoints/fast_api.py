@@ -57,7 +57,7 @@ async def create_task(task: TaskCreationPayload) -> TaskResponse:
         task_type=task.task_type,
         activation_time=task.activation_time,
     )
-    return TaskResponse(task=TaskDTO.parse_obj(result.to_raw()))
+    return TaskResponse(task=TaskDTO.from_orm(result))
 
 
 @app.post("/task/{task_id}/dependent_tasks")
@@ -69,21 +69,17 @@ async def add_dependent_task(
         task_id=task_id,
         dependent_task_id=dependent_task.id,
     )
-    return TaskResponse(task=TaskDTO.parse_obj(result.to_raw()))
+    return TaskResponse(task=TaskDTO.from_orm(result))
 
 
 async def run_activate_ready_task_loop() -> None:
     """
     Main background task loop
     """
-
-    async def _activate_ready_tasks() -> None:
-        logger.debug("Activating inactive ready tasks")
-        await command_service.activate_ready_tasks()
-
     while True:
         try:
-            await _activate_ready_tasks()
+            logger.debug("Activating inactive ready tasks")
+            await command_service.activate_ready_tasks()
         except Exception:
             logger.exception("An error occurred during background task:")
 
