@@ -170,7 +170,9 @@ class TestTaskDependents:
         with pytest.raises(TaskCircularDependencyError):
             parent.add_dependent_tasks([parent])
 
-    @pytest.mark.skip("Not supported yet")
+    @pytest.mark.skip(
+        "This can't be supported without having an overly large aggregate",
+    )
     def test_task_cannot_depend_on_itself_through_a_child(self) -> None:
         """
         Given a task with a dependency
