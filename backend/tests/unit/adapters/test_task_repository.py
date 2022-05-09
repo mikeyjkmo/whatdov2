@@ -1,15 +1,15 @@
 import asyncio
 from datetime import datetime, timedelta
-from typing import Any, Callable
+from typing import Any, AsyncGenerator, Callable
 from uuid import UUID
 
 import pytest
 import pytest_asyncio
 
 from whatdo2.adapters.orm import delete_and_create_tables
-from whatdo2.adapters.sql_task_repository import SQLTaskRepository
 from whatdo2.adapters.task_repository import TaskRepository
 from whatdo2.domain.task.core import Task, TaskType
+from whatdo2.service_layer.unit_of_work import new_uow
 
 pytestmark = pytest.mark.db_unit_test
 
@@ -19,9 +19,10 @@ async def create_tables_fixture() -> None:
     await delete_and_create_tables()
 
 
-@pytest.fixture(name="repository")
-def repository_fixture() -> TaskRepository:
-    return SQLTaskRepository()
+@pytest_asyncio.fixture(name="repository")
+async def repository_fixture() -> AsyncGenerator[TaskRepository, None]:
+    async with new_uow() as uow:
+        yield uow.task_repository
 
 
 def _delete_task_finalizer(

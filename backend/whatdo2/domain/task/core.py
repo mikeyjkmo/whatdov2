@@ -1,5 +1,6 @@
 import uuid
-from dataclasses import replace as dc_replace, fields as dc_fields
+from dataclasses import fields as dc_fields
+from dataclasses import replace as dc_replace
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Type
@@ -115,7 +116,8 @@ class Task(BaseTask):
         }
 
         constr_dict["is_prerequisite_for"] = [
-            DependentTask.from_orm(o) for o in getattr(
+            DependentTask.from_orm(o)
+            for o in getattr(
                 orm,
                 "is_prerequisite_for",
                 (),
