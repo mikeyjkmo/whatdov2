@@ -15,7 +15,7 @@ class UnitOfWork:
 
 @asynccontextmanager
 async def new_uow() -> AsyncGenerator[UnitOfWork, None]:
-    engine = create_async_engine(POSTGRES_URI, echo=True)
+    engine = create_async_engine(POSTGRES_URI, echo=False)
     async with AsyncSession(engine, expire_on_commit=False) as session:
         yield UnitOfWork(session)
         await session.commit()

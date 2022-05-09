@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, cast
+from typing import List, cast
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,12 +9,6 @@ from sqlalchemy.orm import selectinload
 from whatdo2.adapters.orm import Association, TaskDBModel
 from whatdo2.adapters.task_repository import TaskRepository
 from whatdo2.domain.task.core import Task
-
-
-def db_model_to_dict(db_model: Any) -> Dict[Any, Any]:
-    dictret = dict(db_model.__dict__)
-    dictret.pop("_sa_instance_state", None)
-    return dictret
 
 
 class SQLTaskRepository(TaskRepository):
