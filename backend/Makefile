@@ -4,6 +4,9 @@ format-check:
 format:
 	poetry run isort --profile black . && poetry run black .
 
+clean:
+	rm -r .mypy_cache
+
 type-check:
 	poetry run mypy .
 
@@ -34,4 +37,5 @@ develop:
 	test-all \
 	test-watch-all \
 	develop \
+	clean
 	type-check
