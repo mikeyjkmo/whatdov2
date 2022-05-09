@@ -3,12 +3,9 @@ from datetime import datetime
 from typing import List
 from uuid import UUID
 
-from motor.motor_asyncio import AsyncIOMotorClient
-
-from whatdo2.adapters.task_repository import MongoTaskRepository
-from whatdo2.config import MONGO_CONNECTION_STR, MONGO_DB_NAME
 from whatdo2.domain.task.core import Task, TaskType
 from whatdo2.domain.task.events import TaskActivated, TaskDeactivated, TaskEvent
+from whatdo2.service_layer.unit_of_work import UnitOfWork, new_uow
 from whatdo2.utils import flatten
 
 logger = logging.getLogger(__name__)
@@ -17,9 +14,6 @@ logger = logging.getLogger(__name__)
 class TaskCommandService:
     def __init__(self) -> None:
         self._get_current_time = datetime.utcnow
-        self._repository = MongoTaskRepository(
-            db=AsyncIOMotorClient(MONGO_CONNECTION_STR)[MONGO_DB_NAME]
-        )
 
     async def _dispatch(self, *events: TaskEvent) -> None:
         for event in events:
@@ -32,12 +26,15 @@ class TaskCommandService:
                 await self.update_is_active_for_prerequisite_tasks(event.task_id)
 
     async def update_is_active_for_prerequisite_tasks(self, task_id: UUID) -> None:
-        tasks = await self._repository.list_prerequisites_for_task(
-            task_id,
-        )
-        await self._multiple_update_is_active(tasks)
+        async with new_uow() as uow:
+            tasks = await uow.task_repository.list_prerequisites_for_task(
+                task_id,
+            )
+            await self._multiple_update_is_active(uow, tasks)
 
-    async def _multiple_update_is_active(self, tasks: List[Task]) -> None:
+    async def _multiple_update_is_active(
+        self, uow: UnitOfWork, tasks: List[Task]
+    ) -> None:
         logger.debug(
             "Calling update_is_active on the following tasks: %s",
             [t.id for t in tasks],
@@ -46,7 +43,7 @@ class TaskCommandService:
         events: List[TaskEvent] = flatten([t.events for t in tasks])
 
         for task in tasks:
-            await self._repository.save(task)
+            await uow.task_repository.save(task)
 
         await self._dispatch(*events)
 
@@ -58,25 +55,28 @@ class TaskCommandService:
         task_type: TaskType,
         activation_time: datetime,
     ) -> Task:
-        new_task = Task.new(
-            name=name,
-            importance=importance,
-            time=time,
-            task_type=task_type,
-            activation_time=activation_time,
-            is_active=True,
-        ).update_is_active(current_time=datetime.utcnow())
-        await self._repository.save(new_task)
-        return new_task
+        async with new_uow() as uow:
+            new_task = Task.new(
+                name=name,
+                importance=importance,
+                time=time,
+                task_type=task_type,
+                activation_time=activation_time,
+                is_active=True,
+            ).update_is_active(current_time=datetime.utcnow())
+            await uow.task_repository.save(new_task)
+            return new_task
 
     async def add_dependent_task(self, task_id: UUID, dependent_task_id: UUID) -> Task:
-        t1 = await self._repository.get(task_id=task_id)
-        t2 = await self._repository.get(task_id=dependent_task_id)
+        async with new_uow() as uow:
+            t1 = await uow.task_repository.get(task_id=task_id)
+            t2 = await uow.task_repository.get(task_id=dependent_task_id)
 
-        result = t1.add_dependent_tasks([t2])
-        await self._repository.save(result)
-        return result
+            result = t1.add_dependent_tasks([t2])
+            await uow.task_repository.save(result)
+            return result
 
     async def activate_ready_tasks(self) -> None:
-        tasks = await self._repository.list_inactive_with_past_activation_times()
-        await self._multiple_update_is_active(tasks)
+        async with new_uow() as uow:
+            tasks = await uow.task_repository.list_inactive_with_past_activation_times()
+            await self._multiple_update_is_active(uow, tasks)
