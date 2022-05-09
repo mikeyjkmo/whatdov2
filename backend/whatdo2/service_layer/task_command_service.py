@@ -16,6 +16,7 @@ class TaskCommandService:
         self._get_current_time = datetime.utcnow
 
     async def _dispatch(self, *events: TaskEvent) -> None:
+        # TODO: Change to using eventbus
         for event in events:
             if isinstance(event, TaskActivated) or isinstance(event, TaskDeactivated):
                 logger.debug(
