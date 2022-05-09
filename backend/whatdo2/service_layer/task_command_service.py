@@ -4,9 +4,7 @@ from typing import AsyncContextManager, Callable, List
 from uuid import UUID
 
 from whatdo2.domain.task.core import Task, TaskType
-from whatdo2.domain.task.events import TaskEvent
 from whatdo2.service_layer.unit_of_work import UnitOfWork
-from whatdo2.utils import flatten
 
 logger = logging.getLogger(__name__)
 
@@ -31,13 +29,10 @@ class TaskCommandService:
             "Calling update_is_active on the following tasks: %s",
             [t.id for t in tasks],
         )
-        tasks = [t.update_is_active(datetime.utcnow()) for t in tasks]
-        events: List[TaskEvent] = flatten([t.events for t in tasks])
-
         for task in tasks:
+            task = task.update_is_active(datetime.utcnow())
             await uow.task_repository.save(task)
-
-        uow.push_events(*events)
+            uow.push_events(*task.events)
 
     async def create_task(
         self,
