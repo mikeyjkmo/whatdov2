@@ -11,16 +11,17 @@ from whatdo2.service_layer.eventbus import EventBus
 
 
 class UnitOfWork:
-    def __init__(self, eventbus: EventBus, session: AsyncSession):
+    def __init__(self, session: AsyncSession):
         self.task_repository = SQLTaskRepository(session)
-        self._eventbus = eventbus
         self._events: List[DomainEvent] = []
 
     def push_events(self, *events: DomainEvent) -> None:
-        self._events.extend(*list(*events))
+        for event in events:
+            self._events.append(event)
 
-    async def publish_events(self) -> None:
-        await self._eventbus.dispatch(*self._events)
+    @property
+    def pushed_events(self) -> List[DomainEvent]:
+        return self._events
 
 
 @asynccontextmanager
@@ -28,9 +29,9 @@ async def new_uow(eventbus: EventBus) -> AsyncGenerator[UnitOfWork, None]:
     engine = create_async_engine(POSTGRES_URI, echo=False)
 
     async with AsyncSession(engine, expire_on_commit=False) as session:
-        uow = UnitOfWork(eventbus, session)
+        uow = UnitOfWork(session)
         yield uow
         await session.commit()
 
     # Publish events after transaction is over
-    await uow.publish_events()
+    await eventbus.dispatch(*uow.pushed_events)
