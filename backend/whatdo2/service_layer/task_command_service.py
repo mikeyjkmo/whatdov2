@@ -32,7 +32,7 @@ class TaskCommandService:
         for task in tasks:
             task = task.update_is_active(datetime.utcnow())
             await uow.task_repository.save(task)
-            uow.push_events(*task.events)
+            uow.push_events(task.events)
 
     async def create_task(
         self,

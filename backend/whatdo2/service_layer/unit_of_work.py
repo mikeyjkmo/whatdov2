@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, List
+from typing import AsyncGenerator, Iterable, List
 
 from sqlalchemy.ext.asyncio.engine import create_async_engine
 from sqlalchemy.ext.asyncio.session import AsyncSession
@@ -15,9 +15,8 @@ class UnitOfWork:
         self.task_repository = SQLTaskRepository(session)
         self._events: List[DomainEvent] = []
 
-    def push_events(self, *events: DomainEvent) -> None:
-        for event in events:
-            self._events.append(event)
+    def push_events(self, events: Iterable[DomainEvent]) -> None:
+        self._events.extend(events)
 
     @property
     def pushed_events(self) -> List[DomainEvent]:
@@ -34,4 +33,4 @@ async def new_uow(eventbus: EventBus) -> AsyncGenerator[UnitOfWork, None]:
         await session.commit()
 
     # Publish events after transaction is over
-    await eventbus.dispatch(*uow.pushed_events)
+    await eventbus.dispatch(uow.pushed_events)

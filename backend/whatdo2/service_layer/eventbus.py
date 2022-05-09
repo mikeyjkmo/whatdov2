@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Any, Awaitable, Callable, Dict, List, Type, TypeVar
+from typing import Any, Awaitable, Callable, Dict, Iterable, List, Type, TypeVar
 
 from whatdo2.domain.typedefs import DomainEvent
 
@@ -17,7 +17,7 @@ class EventBus:
     ) -> None:
         self._handlers[event_type].append(handler)
 
-    async def dispatch(self, *events: DomainEvent) -> None:
+    async def dispatch(self, events: Iterable[DomainEvent]) -> None:
         for event in events:
             for handler in self._handlers[type(event)]:
                 await handler(event)
