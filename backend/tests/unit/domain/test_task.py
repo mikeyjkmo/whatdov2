@@ -2,7 +2,12 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from whatdo2.domain.task.core import DependentTask, Task, TaskType
+from whatdo2.domain.task.core import (
+    DependentTask,
+    Task,
+    TaskCircularDependencyError,
+    TaskType,
+)
 from whatdo2.domain.task.events import TaskActivated, TaskDeactivated
 
 
@@ -146,6 +151,51 @@ class TestTaskDependents:
         assert root.is_prerequisite_for == (DependentTask.from_task(child1),)
         assert root.effective_density == pytest.approx(1.8)
         assert root.density == 1.0
+
+    def test_task_cannot_depend_on_itself(self) -> None:
+        """
+        Given a task with a dependency
+        When we make it a prerequisite of itself
+        Then there should be an error
+        """
+        parent = Task.new(
+            name="hello",
+            importance=5,
+            time=5,
+            task_type=TaskType.HOME,
+            activation_time=datetime.now(),
+            is_active=True,
+        )
+
+        with pytest.raises(TaskCircularDependencyError):
+            parent.add_dependent_tasks([parent])
+
+    @pytest.mark.skip("Not supported yet")
+    def test_task_cannot_depend_on_itself_through_a_child(self) -> None:
+        """
+        Given a task with a dependency
+        When we make it a prerequisite of itself
+        Then there should be an error
+        """
+        child = Task.new(
+            name="hello child",
+            importance=5,
+            time=5,
+            task_type=TaskType.HOME,
+            activation_time=datetime.now(),
+            is_active=True,
+        )
+        parent = Task.new(
+            name="hello",
+            importance=5,
+            time=5,
+            task_type=TaskType.HOME,
+            activation_time=datetime.now(),
+            is_active=True,
+        )
+
+        with pytest.raises(TaskCircularDependencyError):
+            parent.add_dependent_tasks([child.add_dependent_tasks([parent])])
 
     def test_task_cannot_depend_on_another_one_more_than_once(self) -> None:
         """

@@ -12,6 +12,10 @@ from whatdo2.domain.typedefs import Entity
 PRIORITY_DENSITY_MARGIN = 0.1
 
 
+class TaskCircularDependencyError(Exception):
+    pass
+
+
 class TaskType(str, Enum):
     HOME = "HOME"
     WORK = "WORK"
@@ -111,17 +115,19 @@ class Task(BaseTask):
         Add dependent tasks to the given task.
         """
         existing_dependency_ids = set(t.id for t in self.is_prerequisite_for)
+
+        if self.id in set(t.id for t in dependent_tasks):
+            raise TaskCircularDependencyError("Task cannot depend on itself")
+
         new_dependents_to_add = [
             DependentTask.from_task(t)
             for t in dependent_tasks
             if t.id not in existing_dependency_ids
         ]
 
+        new_dependents = (*self.is_prerequisite_for, *new_dependents_to_add)
         return self._replace(
-            is_prerequisite_for=(
-                *self.is_prerequisite_for,
-                *new_dependents_to_add,
-            ),
+            is_prerequisite_for=new_dependents,
         ).ensure_valid_state()
 
     def remove_dependent_tasks(self, dependent_tasks: List["Task"]) -> "Task":
