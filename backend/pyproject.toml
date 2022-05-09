@@ -7,13 +7,10 @@ authors = ["Mikey Mo <mikeyjkmo@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 python-dotenv = "^0.20.0"
-dnspython = "^2.2.1"
 pydantic = "^1.9.0"
 fastapi = "^0.75.2"
 uvicorn = {extras = ["standard"], version = "^0.17.6"}
-motor = "^3.0.0"
 SQLAlchemy = {extras = ["asyncio", "mypy"], version = "^1.4.36"}
-psycopg2 = "^2.9.3"
 asyncpg = "^0.25.0"
 
 [tool.poetry.dev-dependencies]

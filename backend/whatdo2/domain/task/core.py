@@ -1,9 +1,8 @@
 import uuid
 from dataclasses import fields as dc_fields
-from dataclasses import replace as dc_replace
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, List, Optional, Tuple, Type
 
 from pydantic.dataclasses import dataclass
 
@@ -35,29 +34,7 @@ class DependentTask(BaseTask):
 
     @classmethod
     def from_task(cls: Type["DependentTask"], t: "Task") -> "DependentTask":
-        if t.density is None or t.effective_density is None:
-            raise ValueError(
-                "Initialized task cannot have None as density or effective_density",
-            )
-
-        return cls(
-            id=t.id,
-            name=t.name,
-            importance=t.importance,
-            task_type=t.task_type,
-            time=t.time,
-            activation_time=t.activation_time,
-            is_active=t.is_active,
-            density=t.density,
-            effective_density=t.effective_density,
-        )
-
-    @classmethod
-    def from_raw(cls: Type["DependentTask"], data: Dict[Any, Any]) -> "DependentTask":
-        init_data = data.copy()
-        init_data.pop("_id", None)
-        init_data.pop("is_prerequisite_for", None)
-        return cls(**init_data)
+        return cls.from_orm(t)  # type: ignore
 
 
 @dataclass(frozen=True)
@@ -87,24 +64,6 @@ class Task(BaseTask):
             activation_time=activation_time,
             is_active=is_active,
         ).ensure_valid_state()
-
-    def _replace(self, **params: Any) -> "Task":
-        """
-        Create a new Task with the parameters replaced
-        """
-        return dc_replace(self, **params)
-
-    @classmethod
-    def from_raw(
-        cls: Type["Task"],
-        raw_task: Dict[Any, Any],
-        raw_dependencies: Tuple[Dict[Any, Any], ...],
-    ) -> "Task":
-        raw_task["is_prerequisite_for"] = tuple(
-            DependentTask.from_raw(t) for t in raw_dependencies
-        )
-        raw_task.pop("_id", None)
-        return cls(**raw_task)
 
     @classmethod
     def from_orm(cls, orm: Any) -> "Task":

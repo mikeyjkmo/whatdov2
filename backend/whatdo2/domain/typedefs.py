@@ -1,5 +1,6 @@
 from dataclasses import asdict as dc_asdict
 from dataclasses import fields as dc_fields
+from dataclasses import replace as dc_replace
 from typing import Any, Dict, Type, TypeVar
 from uuid import UUID
 
@@ -32,3 +33,9 @@ class Entity:
             if hasattr(orm, field.name)
         }
         return cls(**constr_dict)
+
+    def _replace(self: T, **params: Any) -> T:
+        """
+        Create a new Entity with the parameters replaced
+        """
+        return dc_replace(self, **params)
