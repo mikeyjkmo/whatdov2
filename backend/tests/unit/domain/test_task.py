@@ -55,6 +55,7 @@ class TestTaskCreation:
 
         assert t1.density == expected_density
         assert t1.effective_density == expected_density
+        assert t1.ultimately_blocks is None
 
     def test_task_will_have_effective_density_of_zero_if_it_is_inactive(self) -> None:
         inactive_task = Task.new(
@@ -112,6 +113,7 @@ class TestTaskDependents:
             DependentTask.from_task(dependent_2),
         )
         assert t.effective_density == pytest.approx(1.7)
+        assert t.ultimately_blocks == dependent_1.id
         assert t.density == 1.0
 
     def test_task_takes_max_density_of_effective_density(self) -> None:
@@ -150,6 +152,7 @@ class TestTaskDependents:
 
         assert root.is_prerequisite_for == (DependentTask.from_task(child1),)
         assert root.effective_density == pytest.approx(1.8)
+        assert root.ultimately_blocks == child2.id
         assert root.density == 1.0
 
     def test_task_cannot_depend_on_itself(self) -> None:
@@ -170,9 +173,6 @@ class TestTaskDependents:
         with pytest.raises(TaskCircularDependencyError):
             parent.add_dependent_tasks([parent])
 
-    @pytest.mark.skip(
-        "This can't be supported without having an overly large aggregate",
-    )
     def test_task_cannot_depend_on_itself_through_a_child(self) -> None:
         """
         Given a task with a dependency
@@ -189,7 +189,7 @@ class TestTaskDependents:
         )
         parent = Task.new(
             name="hello",
-            importance=5,
+            importance=6,
             time=5,
             task_type=TaskType.HOME,
             activation_time=datetime.now(),

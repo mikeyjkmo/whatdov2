@@ -28,6 +28,7 @@ class TaskDBModel(Base):
     time = Column(Integer())
     activation_time = Column(DateTime())
     is_active = Column(Boolean())
+    ultimately_blocks: str = Column(ForeignKey("task.id"), nullable=True)
     is_prerequisite_for: Any = relationship(
         "TaskDBModel",
         secondary=Association.__table__,

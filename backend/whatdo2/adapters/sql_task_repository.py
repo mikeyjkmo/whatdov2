@@ -38,6 +38,11 @@ class SQLTaskRepository(TaskRepository):
     async def save(self, task: Task) -> None:
         raw_task = task.to_raw()
         raw_task["id"] = str(raw_task["id"])
+        raw_task["ultimately_blocks"] = (
+            str(raw_task["ultimately_blocks"])
+            if raw_task["ultimately_blocks"] is not None
+            else None
+        )
         is_prerequisite_for = raw_task.pop("is_prerequisite_for")
 
         task_db_model = TaskDBModel(**raw_task)

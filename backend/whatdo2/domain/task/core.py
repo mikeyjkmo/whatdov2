@@ -35,6 +35,7 @@ class BaseTask(Entity):
 class DependentTask(BaseTask):
     density: float
     effective_density: float
+    ultimately_blocks: Optional[uuid.UUID] = None
 
     @classmethod
     def from_task(cls: Type["DependentTask"], t: "Task") -> "DependentTask":
@@ -45,6 +46,7 @@ class DependentTask(BaseTask):
 class Task(BaseTask):
     density: Optional[float] = None
     effective_density: Optional[float] = None
+    ultimately_blocks: Optional[uuid.UUID] = None
     is_prerequisite_for: Tuple[DependentTask, ...] = ()
     events: Tuple[TaskEvent, ...] = ()
 
@@ -93,21 +95,47 @@ class Task(BaseTask):
         Given a task, return a new task with the calculated density
         """
         density = float(self.importance / self.time)
-        max_density_of_dependent_tasks = max(
-            [t.effective_density for t in self.is_prerequisite_for if t.is_active] + [0]
+
+        sorted_dep_tasks_by_ed = list(
+            dt
+            for dt in sorted(self.is_prerequisite_for, key=lambda t: t.is_active)
+            if dt.is_active
         )
 
         effective_density = density
-        if max_density_of_dependent_tasks >= density:
+        ultimately_blocks = None
+
+        dep_with_highest_ed = (
+            sorted_dep_tasks_by_ed[0] if sorted_dep_tasks_by_ed else None
+        )
+        if (
+            dep_with_highest_ed
+            and dep_with_highest_ed.effective_density > effective_density
+        ):
             # If the density is smaller than the maximum of its dependent
             # tasks, this self should take on the density of that maximum, plus
             # a small margin -- this ensures that the self is more important
             # than those that depend on it, as it needs to be done first.
-            effective_density = max_density_of_dependent_tasks + PRIORITY_DENSITY_MARGIN
+            effective_density = (
+                dep_with_highest_ed.effective_density + PRIORITY_DENSITY_MARGIN
+            )
+            # Keep track of the task that this one ultimately blocks at the
+            # end of the dependency chain
+            ultimately_blocks = (
+                dep_with_highest_ed.id
+                if dep_with_highest_ed.ultimately_blocks is None
+                else dep_with_highest_ed.ultimately_blocks
+            )
+
+        if ultimately_blocks == self.id:
+            raise TaskCircularDependencyError(
+                "Task ultimately blocks itself, so there is a circular dependency",
+            )
 
         return self._replace(
             density=density,
             effective_density=effective_density if self.is_active else 0,
+            ultimately_blocks=ultimately_blocks,
         )
 
     def add_dependent_tasks(self, dependent_tasks: List["Task"]) -> "Task":
